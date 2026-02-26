@@ -10,10 +10,9 @@ import {
   MessageSquare
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import Container from '@/components/layout/Container'
 import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
 import { Link } from 'react-router-dom'
 import { ROUTES } from '@/lib/constants'
 import { cn } from '@/lib/utils'

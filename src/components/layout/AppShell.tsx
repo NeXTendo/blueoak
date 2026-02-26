@@ -1,5 +1,4 @@
 import { useLocation } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useAuthStore } from '@/stores/authStore'
 import BottomNav from './BottomNav'

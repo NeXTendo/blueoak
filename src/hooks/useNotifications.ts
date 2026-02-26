@@ -19,9 +19,10 @@ export function useNotifications() {
         .order('created_at', { ascending: false })
         .limit(50)
       if (error) throw error
-      const unread = (data ?? []).filter((n) => !n.is_read).length
+      const notifications = data as any[]
+      const unread = (notifications ?? []).filter((n) => !n.is_read).length
       setUnreadCount(unread)
-      return data ?? []
+      return notifications
     },
     enabled: !!profile?.id,
     staleTime: 1000 * 30,
