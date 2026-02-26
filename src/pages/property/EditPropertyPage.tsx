@@ -106,7 +106,7 @@ export default function EditPropertyPage() {
         .update({
           ...formData,
           updated_at: new Date().toISOString(),
-        })
+        } as never)
         .eq('id', id || '')
 
       if (error) throw error
