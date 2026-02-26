@@ -1,19 +1,29 @@
 import { NavLink } from 'react-router-dom'
-import { Home, Search, Heart, MessageCircle, User } from 'lucide-react'
+import { Home, Search, Heart, MessageCircle, User, LogIn } from 'lucide-react'
+import { useAuthStore } from '@/stores/authStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { ROUTES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 
-const navItems = [
-  { to: ROUTES.HOME,     icon: Home,          labelKey: 'nav.home' },
-  { to: ROUTES.SEARCH,   icon: Search,        labelKey: 'nav.search' },
-  { to: ROUTES.SAVED,    icon: Heart,         labelKey: 'nav.saved' },
-  { to: ROUTES.MESSAGES, icon: MessageCircle, labelKey: 'nav.messages', badge: true },
-  { to: ROUTES.PROFILE,  icon: User,          labelKey: 'nav.profile' },
-]
-
 export default function BottomNav() {
+  const session = useAuthStore((s) => s.session)
   const unreadCount = useNotificationStore((s) => s.unreadCount)
+
+  // Guest nav: Home, Search, Sign In
+  // Auth nav: Home, Search, Saved, Messages, Profile
+  const navItems = session
+    ? [
+        { to: ROUTES.HOME,     icon: Home,          badge: false },
+        { to: ROUTES.SEARCH,   icon: Search,        badge: false },
+        { to: ROUTES.SAVED,    icon: Heart,         badge: false },
+        { to: ROUTES.MESSAGES, icon: MessageCircle, badge: true },
+        { to: ROUTES.PROFILE,  icon: User,          badge: false },
+      ]
+    : [
+        { to: ROUTES.HOME,   icon: Home,   badge: false },
+        { to: ROUTES.SEARCH, icon: Search, badge: false },
+        { to: ROUTES.LOGIN,  icon: LogIn,  badge: false },
+      ]
 
   return (
     <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-3rem)] max-w-sm">
@@ -51,3 +61,4 @@ export default function BottomNav() {
     </div>
   )
 }
+

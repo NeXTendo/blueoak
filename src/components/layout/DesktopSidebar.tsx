@@ -1,12 +1,14 @@
-import { NavLink } from 'react-router-dom'
-import { Home, Search, Heart, MessageCircle, User, LayoutDashboard, Settings, Building2 } from 'lucide-react'
+import { NavLink, Link } from 'react-router-dom'
+import { Home, Search, Heart, MessageCircle, User, LayoutDashboard, Settings, Building2, LogIn } from 'lucide-react'
 import { useRole } from '@/hooks/useRole'
+import { useAuthStore } from '@/stores/authStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { ROUTES, APP_NAME } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 
 export default function DesktopSidebar() {
   const { isAdmin, isSeller } = useRole()
+  const session = useAuthStore((s) => s.session)
   const unreadCount = useNotificationStore((s) => s.unreadCount)
 
   const renderNav = (items: any[]) => items.map(({ to, icon: Icon, label, badge }) => (
@@ -42,29 +44,45 @@ export default function DesktopSidebar() {
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-72 bg-background z-40 flex flex-col p-6 space-y-8">
       {/* Premium Logo */}
-      <div className="flex items-center gap-3 px-4 py-2">
-        <div className="h-3 w-3 rounded-full bg-primary" />
-        <span className="text-xl font-black uppercase tracking-widest text-primary">
+      <div className="flex flex-col items-center justify-center pt-2 pb-6 px-4">
+        <img 
+          src="/icons/logo.png" 
+          alt={APP_NAME} 
+          className="h-24 w-auto object-contain drop-shadow-xl transition-transform hover:scale-105"
+        />
+        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary mt-2">
           {APP_NAME}
         </span>
       </div>
 
       {/* Nav Sections */}
       <nav className="flex-1 space-y-10">
+        {/* Public browsing — always visible */}
         <div className="space-y-1">
           <div className="px-4 pb-4 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/30">
             Explorer
           </div>
           {renderNav([
-            { to: ROUTES.HOME,     icon: Home,          label: 'Portfolio' },
-            { to: ROUTES.SEARCH,   icon: Search,        label: 'Discovery' },
-            { to: ROUTES.SAVED,    icon: Heart,         label: 'Collection' },
-            { to: ROUTES.MESSAGES, icon: MessageCircle, label: 'Concierge', badge: unreadCount },
-            { to: ROUTES.PROFILE,  icon: User,          label: 'Identity' },
+            { to: ROUTES.HOME,   icon: Home,   label: 'Portfolio' },
+            { to: ROUTES.SEARCH, icon: Search, label: 'Discovery' },
           ])}
         </div>
 
-        {isSeller && (
+        {/* Auth-required items — only when logged in */}
+        {session && (
+          <div className="space-y-1">
+            <div className="px-4 pb-4 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/30">
+              Personal
+            </div>
+            {renderNav([
+              { to: ROUTES.SAVED,    icon: Heart,         label: 'Collection' },
+              { to: ROUTES.MESSAGES, icon: MessageCircle, label: 'Concierge', badge: unreadCount },
+              { to: ROUTES.PROFILE,  icon: User,          label: 'Identity' },
+            ])}
+          </div>
+        )}
+
+        {session && isSeller && (
           <div className="space-y-1">
             <div className="px-4 pb-4 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/30">
               Management
@@ -77,25 +95,44 @@ export default function DesktopSidebar() {
           </div>
         )}
 
-        {isAdmin && (
+        {session && isAdmin && (
           <div className="space-y-1 border-t pt-8 border-secondary/50">
             <div className="px-4 pb-4 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/30">
               Operations
             </div>
             {renderNav([
-              { to: ROUTES.ADMIN,            icon: LayoutDashboard, label: 'Control' },
-              { to: ROUTES.ADMIN_USERS,      icon: User,            label: 'Users' },
+              { to: ROUTES.ADMIN,       icon: LayoutDashboard, label: 'Control' },
+              { to: ROUTES.ADMIN_USERS, icon: User,            label: 'Users' },
             ])}
           </div>
         )}
       </nav>
 
-      {/* Footer info */}
+      {/* Footer — Sign In CTA for guests, or Premium label for logged in */}
       <div className="px-4 py-6 border-t border-secondary/50">
-        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/20 italic">
-          Premium Access
-        </p>
+        {session ? (
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/20 italic">
+            Premium Access
+          </p>
+        ) : (
+          <div className="space-y-3">
+            <Link
+              to={ROUTES.LOGIN}
+              className="flex items-center justify-center gap-3 w-full h-12 bg-primary text-primary-foreground rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:shadow-premium transition-all"
+            >
+              <LogIn size={14} />
+              Sign In
+            </Link>
+            <Link
+              to={ROUTES.REGISTER}
+              className="flex items-center justify-center w-full h-10 border border-secondary rounded-xl text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary hover:border-primary transition-all"
+            >
+              Create Account
+            </Link>
+          </div>
+        )}
       </div>
     </aside>
   )
 }
+

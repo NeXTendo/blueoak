@@ -24,7 +24,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
     immer((set) => ({
       session:       null,
       profile:       null,
-      isLoading:     true,
+      isLoading:     false,
       isInitialized: false,
 
       setSession:     (session)     => set((s) => { s.session = session }),

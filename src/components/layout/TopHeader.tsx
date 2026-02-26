@@ -1,4 +1,4 @@
-import { Bell, Search, Command } from 'lucide-react'
+import { Bell, Search } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { useUnreadCount } from '@/hooks/useNotifications'
@@ -12,8 +12,8 @@ export function TopHeader() {
     <header className="flex h-20 shrink-0 items-center justify-between border-b border-secondary bg-background/80 backdrop-blur-2xl px-8 sticky top-0 z-40">
       {/* Left: Branding/Command Status */}
       <div className="flex items-center gap-6">
-        <div className="h-10 w-10 bg-primary rounded-xl flex items-center justify-center shadow-premium group cursor-pointer hover:rotate-6 transition-transform">
-          <Command size={20} className="text-primary-foreground group-hover:scale-110 transition-transform" />
+        <div className="h-10 w-10 flex items-center justify-center cursor-pointer transition-transform hover:scale-110">
+          <img src="/icons/logo.png" alt="BlueOak Logo" className="h-full w-full object-contain drop-shadow-md" />
         </div>
         <div className="hidden md:flex flex-col">
           <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary leading-none">BlueOak</span>

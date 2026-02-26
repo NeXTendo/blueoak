@@ -10,8 +10,8 @@
   "scope": "/",
   "lang": "en",
   "icons": [
-    { "src": "/icons/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "/icons/logo.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
+    { "src": "/icons/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "screenshots": [
     { "src": "/screenshots/desktop.png", "sizes": "1280x800", "type": "image/png", "form_factor": "wide",   "label": "BlueOak Desktop" },

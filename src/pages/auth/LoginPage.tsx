@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next'
 import { ROUTES } from '@/lib/constants'
 import { loginSchema, type LoginFormData } from '@/lib/validations'
 import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/stores/authStore'
 import { cn } from '@/lib/utils'
 import AuthLayout from '@/components/auth/AuthLayout'
 
@@ -14,9 +16,18 @@ export default function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const { login, loginWithGoogle } = useAuth()
+  const { loginWithGoogle } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [debugLog, setDebugLog] = useState<string[]>([])
+  const logRef = useRef<string[]>([])
+
+  const addLog = (msg: string) => {
+    const entry = `[${new Date().toLocaleTimeString()}] ${msg}`
+    logRef.current = [...logRef.current, entry]
+    setDebugLog([...logRef.current])
+    console.log(entry)
+  }
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || ROUTES.HOME
 
@@ -27,10 +38,52 @@ export default function LoginPage() {
   async function onSubmit(data: LoginFormData) {
     try {
       setError(null)
-      await login(data)
+      addLog(`Step 1: Calling Supabase signInWithPassword for ${data.email}...`)
+      
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ 
+        email: data.email, 
+        password: data.password 
+      })
+      
+      if (authError) {
+        addLog(`ERROR at Step 1: ${authError.message}`)
+        setError(authError.message)
+        return
+      }
+      
+      addLog(`Step 2: Auth succeeded! Session: ${!!authData.session}, User: ${authData.session?.user?.id?.slice(0, 8)}...`)
+      
+      if (authData.session) {
+        // Set session in store
+        addLog(`Step 3: Setting session in store...`)
+        useAuthStore.getState().setSession(authData.session)
+        
+        // Try to fetch profile (non-blocking — skip if fails)
+        addLog(`Step 4: Fetching profile...`)
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authData.session.user.id)
+            .single()
+          
+          if (profileError) {
+            addLog(`WARNING at Step 4: Profile fetch failed: ${profileError.message} — continuing without profile`)
+          } else {
+            addLog(`Step 4: Profile fetched: ${(profile as any)?.full_name}`)
+            useAuthStore.getState().setProfile(profile)
+          }
+        } catch (profileErr: any) {
+          addLog(`WARNING at Step 4: ${profileErr?.message} — continuing without profile`)
+        }
+      }
+      
+      addLog(`Step 5: Navigating to ${from}`)
       navigate(from, { replace: true })
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Login failed. Please try again.')
+      const msg = e instanceof Error ? e.message : 'Login failed. Please try again.'
+      addLog(`FATAL ERROR: ${msg}`)
+      setError(msg)
     }
   }
 
@@ -130,6 +183,21 @@ export default function LoginPage() {
             {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : t('auth.login')}
           </button>
         </form>
+
+        {/* Debug Log Panel */}
+        {debugLog.length > 0 && (
+          <div className="mt-4 p-3 bg-black/5 dark:bg-white/5 rounded-xl max-h-32 overflow-auto">
+            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40 mb-2">Debug Log</p>
+            {debugLog.map((log, i) => (
+              <p key={i} className={cn(
+                "text-[10px] font-mono",
+                log.includes('ERROR') ? 'text-destructive' : 'text-muted-foreground'
+              )}>
+                {log}
+              </p>
+            ))}
+          </div>
+        )}
       </div>
     </AuthLayout>
   )

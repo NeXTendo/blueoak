@@ -66,9 +66,11 @@ export const router = createBrowserRouter([
       { path: ROUTES.RESET_PASSWORD,  element: L(ResetPasswordPage) },
       { path: ROUTES.VERIFY_EMAIL,    element: L(VerifyEmailPage) },
 
-      // Main app (auth required)
-      { path: ROUTES.HOME,            element: <ProtectedRoute>{L(HomePage)}</ProtectedRoute> },
-      { path: ROUTES.SEARCH,          element: <ProtectedRoute>{L(SearchPage)}</ProtectedRoute> },
+      // Main app (public browsing)
+      { path: ROUTES.HOME,            element: L(HomePage) },
+      { path: ROUTES.SEARCH,          element: L(SearchPage) },
+
+      // Authenticated user pages
       { path: ROUTES.SAVED,           element: <ProtectedRoute>{L(SavedPage)}</ProtectedRoute> },
       { path: ROUTES.MESSAGES,        element: <ProtectedRoute>{L(MessagesPage)}</ProtectedRoute> },
       { path: ROUTES.CONVERSATION,    element: <ProtectedRoute>{L(ConversationPage)}</ProtectedRoute> },

@@ -18,16 +18,23 @@ export function useAuth() {
   const navigate = useNavigate()
 
   async function login({ email, password }: LoginFormData) {
+    console.log('[useAuth] signInWithPassword starting...')
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
+    if (error) {
+      console.error('[useAuth] signInWithPassword error:', error.message)
+      throw error
+    }
+    console.log('[useAuth] signInWithPassword succeeded, session:', !!data.session)
     
     // Sync store immediately to prevent redirect race conditions
     setSession(data.session)
     if (data.session) {
       try {
+        console.log('[useAuth] Fetching profile for:', data.session.user.id)
         await fetchProfile(data.session.user.id)
+        console.log('[useAuth] Profile fetched successfully')
       } catch (err) {
-        console.error('Failed to pre-fetch profile during login:', err)
+        console.error('[useAuth] Failed to pre-fetch profile during login:', err)
       }
     }
     return data
@@ -129,18 +136,26 @@ export function useAuthInit() {
         const { data: { session } } = await supabase.auth.getSession()
         if (!mounted) return
         setSession(session)
-        
+
+        // Mark as initialized immediately so the UI can render
+        setInitialized(true)
+
+        // Fetch profile in the background (non-blocking)
         if (session) {
-          const { data } = await supabase.from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single()
-          
-          if (mounted && data) setProfile(data)
+          try {
+            const { data } = await supabase.from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single()
+
+            if (mounted && data) setProfile(data)
+          } catch (profileErr) {
+            console.error('Failed to fetch profile during init:', profileErr)
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error)
-      } finally {
+        // Even on error, mark as initialized so the app doesn't hang
         if (mounted) setInitialized(true)
       }
     }
@@ -150,10 +165,10 @@ export function useAuthInit() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         const currentSession = useAuthStore.getState().session
-        
+
         // Always update session on change events from Supabase
         setSession(newSession)
-        
+
         // Only fetch profile if user identity changed or explicitly signed in
         if (newSession?.user?.id !== currentSession?.user?.id || event === 'SIGNED_IN') {
           if (newSession) {
@@ -162,7 +177,7 @@ export function useAuthInit() {
                 .select('*')
                 .eq('id', newSession.user.id)
                 .single()
-              
+
               if (error) throw error
               if (mounted) setProfile(data)
             } catch (err) {

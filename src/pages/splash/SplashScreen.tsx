@@ -8,7 +8,7 @@ export default function SplashScreen() {
   useEffect(() => {
     const hasOnboarded = localStorage.getItem('blueoak-onboarded')
     const timer = setTimeout(() => {
-      navigate(hasOnboarded ? ROUTES.LOGIN : ROUTES.ONBOARDING, { replace: true })
+      navigate(hasOnboarded ? ROUTES.HOME : ROUTES.ONBOARDING, { replace: true })
     }, 2500)
     return () => clearTimeout(timer)
   }, [navigate])

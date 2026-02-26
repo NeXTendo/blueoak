@@ -1,6 +1,5 @@
 import { useLocation } from 'react-router-dom'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { useAuthStore } from '@/stores/authStore'
 import BottomNav from './BottomNav'
 import DesktopSidebar from './DesktopSidebar'
 import { TopHeader } from './TopHeader'
@@ -19,9 +18,9 @@ interface Props { children: React.ReactNode }
 export default function AppShell({ children }: Props) {
   const location = useLocation()
   const isMobile = useIsMobile()
-  const session  = useAuthStore((s) => s.session)
 
-  const showNav = session && !NO_NAV_ROUTES.includes(location.pathname as typeof ROUTES.SPLASH)
+  // Show nav on all pages except auth/onboarding pages (guests included)
+  const showNav = !NO_NAV_ROUTES.includes(location.pathname as typeof ROUTES.SPLASH)
 
   return (
     <div className="flex min-h-screen bg-background selection:bg-primary selection:text-primary-foreground">
@@ -46,3 +45,4 @@ export default function AppShell({ children }: Props) {
     </div>
   )
 }
+
