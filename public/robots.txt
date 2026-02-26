@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Allow: /property/
+Allow: /search
+Disallow: /admin/
+Disallow: /super-admin/
+Disallow: /seller/
+Disallow: /api/
+Sitemap: https://blueoak.app/sitemap.xml

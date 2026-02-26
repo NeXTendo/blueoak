@@ -1,0 +1,7 @@
+{
+  "app": { "name": "BlueOak", "tagline": "Sami gidanku na musamman" },
+  "nav": { "home": "Gida", "search": "Bincike", "saved": "An ajiye", "messages": "Saƙonni", "profile": "Bayanai" },
+  "auth": { "login": "Shiga", "register": "Yi rajista", "logout": "Fita", "email": "Imel", "password": "Kalmar sirri", "noAccount": "Ba ka da asusun?", "hasAccount": "Kana da asusun?" },
+  "property": { "forSale": "Ana siyarwa", "toRent": "Ana haya", "shortTerm": "Ɗan gajeren lokaci", "lease": "Hayar dogon lokaci", "auction": "Gwanjon kaya", "addProperty": "Ƙara Dukiya", "noResults": "Ba a sami dukiya ba" },
+  "common": { "loading": "Ana lodi...", "error": "Wani abu ya yi kuskure", "save": "Ajiye", "cancel": "Soke", "back": "Baya", "next": "Na gaba", "done": "An gama", "close": "Rufe" }
+}

@@ -1,0 +1,7 @@
+{
+  "app": { "name": "BlueOak", "tagline": "Trouvez votre propriété idéale" },
+  "nav": { "home": "Accueil", "search": "Recherche", "saved": "Sauvegardés", "messages": "Messages", "profile": "Profil" },
+  "auth": { "login": "Connexion", "register": "S'inscrire", "logout": "Déconnexion", "email": "Adresse e-mail", "password": "Mot de passe", "forgotPassword": "Mot de passe oublié ?", "noAccount": "Pas de compte ?", "hasAccount": "Déjà un compte ?" },
+  "property": { "forSale": "À vendre", "toRent": "À louer", "shortTerm": "Court terme", "lease": "Bail", "auction": "Enchères", "addProperty": "Ajouter une propriété", "noResults": "Aucune propriété trouvée" },
+  "common": { "loading": "Chargement...", "error": "Une erreur s'est produite", "save": "Sauvegarder", "cancel": "Annuler", "delete": "Supprimer", "edit": "Modifier", "back": "Retour", "next": "Suivant", "done": "Terminé", "close": "Fermer" }
+}

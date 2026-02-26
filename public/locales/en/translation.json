@@ -1,0 +1,74 @@
+{
+  "app": { "name": "BlueOak", "tagline": "Find your perfect property" },
+  "nav": {
+    "home": "Home", "search": "Search", "saved": "Saved",
+    "messages": "Messages", "profile": "Profile"
+  },
+  "auth": {
+    "login": "Log in", "register": "Sign up", "logout": "Log out",
+    "email": "Email address", "password": "Password",
+    "forgotPassword": "Forgot password?", "resetPassword": "Reset password",
+    "noAccount": "Don't have an account?", "hasAccount": "Already have an account?",
+    "continueWith": "Continue with {{provider}}",
+    "verifyEmail": "Verify your email",
+    "verifyEmailDesc": "We sent a verification link to {{email}}"
+  },
+  "property": {
+    "forSale": "For Sale", "toRent": "To Rent", "shortTerm": "Short-term",
+    "lease": "Lease", "auction": "Auction",
+    "beds": "{{count}} bed", "beds_plural": "{{count}} beds",
+    "baths": "{{count}} bath", "baths_plural": "{{count}} baths",
+    "sqm": "{{value}} m²", "sqft": "{{value}} ft²",
+    "addProperty": "Add Property", "editProperty": "Edit Property",
+    "viewDetails": "View Details", "saveProperty": "Save", "savedProperty": "Saved",
+    "contactSeller": "Contact Seller", "bookViewing": "Book Viewing",
+    "bookNow": "Book Now", "placeBid": "Place Bid",
+    "price": "Price", "negotiable": "Negotiable",
+    "perMonth": "/ month", "perNight": "/ night",
+    "noResults": "No properties found", "noResultsDesc": "Try adjusting your search filters"
+  },
+  "search": {
+    "placeholder": "Search by location, address or keyword...",
+    "filters": "Filters", "sort": "Sort",
+    "results": "{{count}} result", "results_plural": "{{count}} results",
+    "nearMe": "Near Me", "mapView": "Map", "listView": "List", "gridView": "Grid",
+    "saveSearch": "Save search", "clearFilters": "Clear all"
+  },
+  "reservation": {
+    "bookViewing": "Book a Viewing",
+    "selectDate": "Select a date", "selectTime": "Select a time",
+    "inPerson": "In person", "virtual": "Virtual",
+    "notes": "Additional notes",
+    "confirm": "Confirm booking", "cancel": "Cancel",
+    "pending": "Pending", "confirmed": "Confirmed",
+    "completed": "Completed", "cancelled": "Cancelled"
+  },
+  "profile": {
+    "myProfile": "My Profile", "editProfile": "Edit Profile",
+    "settings": "Settings", "myListings": "My Listings",
+    "myReservations": "My Reservations", "dashboard": "Dashboard",
+    "verified": "Verified", "memberSince": "Member since {{date}}",
+    "responseTime": "Responds in {{time}}"
+  },
+  "common": {
+    "loading": "Loading...", "error": "Something went wrong",
+    "retry": "Try again", "save": "Save", "cancel": "Cancel",
+    "delete": "Delete", "edit": "Edit", "share": "Share",
+    "report": "Report", "back": "Back", "next": "Next",
+    "done": "Done", "close": "Close", "confirm": "Confirm",
+    "yes": "Yes", "no": "No", "or": "or",
+    "required": "Required", "optional": "Optional",
+    "seeAll": "See all", "showMore": "Show more", "showLess": "Show less",
+    "copied": "Copied!", "noData": "Nothing here yet"
+  },
+  "errors": {
+    "notFound": "Page not found",
+    "notFoundDesc": "The page you're looking for doesn't exist.",
+    "unauthorized": "Access denied",
+    "unauthorizedDesc": "You don't have permission to view this page.",
+    "serverError": "Server error",
+    "serverErrorDesc": "Something went wrong on our end. Please try again.",
+    "offline": "You're offline",
+    "offlineDesc": "Check your internet connection and try again."
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "app": { "name": "BlueOak", "tagline": "Pata nyumba yako bora" },
+  "nav": { "home": "Nyumbani", "search": "Tafuta", "saved": "Zilizohifadhiwa", "messages": "Ujumbe", "profile": "Wasifu" },
+  "auth": { "login": "Ingia", "register": "Jisajili", "logout": "Toka", "email": "Barua pepe", "password": "Nywila", "noAccount": "Huna akaunti?", "hasAccount": "Una akaunti tayari?" },
+  "property": { "forSale": "Inauzwa", "toRent": "Kupangishwa", "shortTerm": "Muda mfupi", "lease": "Kukodisha", "auction": "Mnada", "addProperty": "Ongeza Mali", "noResults": "Hakuna mali zilizopatikana" },
+  "common": { "loading": "Inapakia...", "error": "Hitilafu imetokea", "save": "Hifadhi", "cancel": "Ghairi", "back": "Rudi", "next": "Ijayo", "done": "Imekamilika", "close": "Funga" }
+}
