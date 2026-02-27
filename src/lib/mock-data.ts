@@ -125,3 +125,8 @@ export const MOCK_PROPERTIES = [
     isFeatured: false,
   }
 ]
+
+export const MOCK_CONVERSATIONS = [
+  { id: '1', user: { name: 'Samantha M.' }, lastMessage: 'Is the price negotiable?', time: '12:45 PM' },
+  { id: '2', user: { name: 'Kelvin Phiri' }, lastMessage: 'The viewing is scheduled...', time: '10:20 AM' },
+]

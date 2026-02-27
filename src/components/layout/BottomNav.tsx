@@ -26,32 +26,27 @@ export default function BottomNav() {
       ]
 
   return (
-    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-3rem)] max-w-sm">
-      <nav className="flex h-16 items-center justify-around px-2 rounded-full border border-white/20 bg-background/70 backdrop-blur-2xl shadow-premium ring-1 ring-black/5 dark:ring-white/10">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border pb-[env(safe-area-inset-bottom)]">
+      <nav className="flex h-16 items-center justify-around px-2 max-w-lg mx-auto">
         {navItems.map(({ to, icon: Icon, badge }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
               cn(
-                'relative flex flex-col items-center justify-center h-12 w-12 rounded-full transition-all duration-300 touch-target',
-                isActive
-                  ? 'bg-primary text-primary-foreground scale-110 shadow-lg'
-                  : 'text-muted-foreground hover:bg-secondary/80 hover:text-foreground'
+                'relative flex flex-col items-center justify-center h-full w-20 transition-all duration-300 touch-target',
+                isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               )
             }
           >
             {({ isActive }) => (
               <>
-                <Icon strokeWidth={isActive ? 2.5 : 1.5} className="h-5 w-5" />
+                <Icon strokeWidth={isActive ? 2.5 : 2} className="h-6 w-6" />
                 {badge && unreadCount > 0 && (
-                  <span className={cn(
-                    "absolute top-2.5 right-2.5 h-2 w-2 rounded-full border-2 border-background",
-                    isActive ? "bg-primary-foreground" : "bg-primary animate-pulse"
-                  )} />
+                  <span className="absolute top-3 right-6 h-2 w-2 rounded-full border-2 border-background bg-primary" />
                 )}
                 {isActive && (
-                  <div className="absolute -bottom-1 h-1 w-1 rounded-full bg-primary-foreground opacity-50" />
+                   <span className="absolute bottom-1 w-1 h-1 rounded-full bg-primary" />
                 )}
               </>
             )}

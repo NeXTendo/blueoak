@@ -17,20 +17,20 @@ export default function DesktopSidebar() {
       to={to}
       className={({ isActive }) =>
         cn(
-          'group flex items-center gap-4 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300',
+          'group flex items-center gap-4 px-4 py-3 rounded-xl text-[13px] font-semibold transition-all duration-300',
           isActive
-            ? 'bg-primary text-primary-foreground shadow-premium'
+            ? 'bg-primary text-primary-foreground shadow-sm'
             : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
         )
       }
     >
       {({ isActive }) => (
         <>
-          <Icon strokeWidth={isActive ? 2.5 : 1.5} className="h-4 w-4" />
+          <Icon strokeWidth={isActive ? 2.5 : 2} className="h-5 w-5" />
           <span className="flex-1">{label}</span>
           {badge ? (
             <span className={cn(
-              "flex h-5 min-w-5 items-center justify-center rounded-full text-[10px] font-black",
+              "flex h-5 min-w-5 items-center justify-center rounded-full text-[11px] font-bold",
               isActive ? "bg-primary-foreground text-primary" : "bg-primary text-primary-foreground"
             )}>
               {badge > 99 ? '99+' : badge}
@@ -42,15 +42,10 @@ export default function DesktopSidebar() {
   ))
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-72 bg-background z-40 flex flex-col p-6 space-y-8">
-      {/* Premium Logo */}
-      <div className="flex flex-col items-center justify-center pt-2 pb-6 px-4">
-        <img 
-          src="/icons/logo.png" 
-          alt={APP_NAME} 
-          className="h-24 w-auto object-contain drop-shadow-xl transition-transform hover:scale-105"
-        />
-        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary mt-2">
+    <aside className="fixed left-0 top-0 bottom-0 w-72 bg-background z-40 flex flex-col p-6 space-y-8 border-r border-secondary/30">
+      {/* Top Left Title */}
+      <div className="flex items-center pt-2 pb-6 px-4">
+        <span className="text-[20px] font-bold tracking-tight text-primary">
           {APP_NAME}
         </span>
       </div>
@@ -59,7 +54,7 @@ export default function DesktopSidebar() {
       <nav className="flex-1 space-y-10">
         {/* Public browsing — always visible */}
         <div className="space-y-1">
-          <div className="px-4 pb-4 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/30">
+          <div className="px-4 pb-3 text-[12px] font-bold text-muted-foreground/40">
             Explorer
           </div>
           {renderNav([
@@ -71,7 +66,7 @@ export default function DesktopSidebar() {
         {/* Auth-required items — only when logged in */}
         {session && (
           <div className="space-y-1">
-            <div className="px-4 pb-4 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/30">
+            <div className="px-4 pb-3 text-[12px] font-bold text-muted-foreground/40">
               Personal
             </div>
             {renderNav([
@@ -84,7 +79,7 @@ export default function DesktopSidebar() {
 
         {session && isSeller && (
           <div className="space-y-1">
-            <div className="px-4 pb-4 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/30">
+            <div className="px-4 pb-3 text-[12px] font-bold text-muted-foreground/40">
               Management
             </div>
             {renderNav([
@@ -96,8 +91,8 @@ export default function DesktopSidebar() {
         )}
 
         {session && isAdmin && (
-          <div className="space-y-1 border-t pt-8 border-secondary/50">
-            <div className="px-4 pb-4 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/30">
+          <div className="space-y-1 border-t pt-8 border-secondary/30">
+            <div className="px-4 pb-3 text-[12px] font-bold text-muted-foreground/40">
               Operations
             </div>
             {renderNav([
@@ -109,30 +104,30 @@ export default function DesktopSidebar() {
       </nav>
 
       {/* Footer — Sign In CTA for guests, or Premium label for logged in */}
-      <div className="px-4 py-6 border-t border-secondary/50">
+      <div className="px-4 py-6 border-t border-secondary/30">
         {session ? (
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/20 italic">
-            Premium Access
+          <p className="text-[12px] font-medium text-muted-foreground/30">
+            Premium Access Enabled
           </p>
         ) : (
           <div className="space-y-3">
             <Link
               to={ROUTES.LOGIN}
-              className="flex items-center justify-center gap-3 w-full h-12 bg-primary text-primary-foreground rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:shadow-premium transition-all"
+              className="flex items-center justify-center gap-2.5 w-full h-12 bg-primary text-primary-foreground rounded-xl text-[14px] font-bold transition-all hover:opacity-90 active:scale-95"
             >
-              <LogIn size={14} />
+              <LogIn size={16} />
               Sign In
             </Link>
             <Link
               to={ROUTES.REGISTER}
-              className="flex items-center justify-center w-full h-10 border border-secondary rounded-xl text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary hover:border-primary transition-all"
+              className="flex items-center justify-center w-full h-11 border border-secondary/60 rounded-xl text-[14px] font-bold text-muted-foreground hover:text-foreground hover:border-foreground transition-all"
             >
               Create Account
             </Link>
           </div>
         )}
       </div>
+
     </aside>
   )
 }
-

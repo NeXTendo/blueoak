@@ -10,8 +10,8 @@ export default function Container({ children, className, fullWidth }: ContainerP
   return (
     <div 
       className={cn(
-        "mx-auto w-full px-4 md:px-6 lg:px-8",
-        !fullWidth && "max-w-screen-2xl",
+        "mx-auto w-full px-4 md:px-8",
+        !fullWidth && "max-w-[1650px]",
         className
       )}
     >

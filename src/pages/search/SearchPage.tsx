@@ -67,34 +67,34 @@ export default function SearchPage() {
   })
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] md:h-screen bg-background">
+    <div className="flex flex-col h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-screen bg-background">
       {/* Search & Filter Header */}
-      <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border/50 py-3">
-        <Container className="space-y-3">
-          <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-xl border-b border-border/40 py-4">
+        <Container className="space-y-4">
+          <div className="flex items-center gap-4">
             <div className="relative flex-1 group">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
+              <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-foreground transition-colors" size={18} />
               <Input 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('search.placeholder', 'City, Suburb or Point of Interest')}
-                className="pl-10 h-11 bg-secondary/50 border-none rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20 transition-all font-medium"
+                placeholder={t('search.placeholder', 'Search cities, suburbs or points of interest...')}
+                className="pl-12 h-12 bg-secondary/30 border-none rounded-2xl focus-visible:ring-2 focus-visible:ring-primary/10 transition-all font-medium text-[15px]"
               />
             </div>
             
-            <div className="flex items-center bg-secondary/50 rounded-xl p-1">
+            <div className="flex items-center bg-secondary/30 rounded-2xl p-1 shrink-0">
               <Button 
-                variant={viewMode === 'grid' ? 'default' : 'ghost'} 
+                variant={viewMode === 'grid' ? 'secondary' : 'ghost'} 
                 size="icon" 
-                className={cn("h-9 w-9 rounded-lg transition-all", viewMode === 'grid' && "shadow-sm")}
+                className={cn("h-10 w-10 rounded-xl transition-all", viewMode === 'grid' && "bg-background shadow-sm hover:bg-background")}
                 onClick={() => setViewMode('grid')}
               >
                 <LayoutGrid size={18} />
               </Button>
               <Button 
-                variant={viewMode === 'map' ? 'default' : 'ghost'} 
+                variant={viewMode === 'map' ? 'secondary' : 'ghost'} 
                 size="icon" 
-                className={cn("h-9 w-9 rounded-lg transition-all", viewMode === 'map' && "shadow-sm")}
+                className={cn("h-10 w-10 rounded-xl transition-all", viewMode === 'map' && "bg-background shadow-sm hover:bg-background")}
                 onClick={() => setViewMode('map')}
               >
                 <MapIcon size={18} />
@@ -103,9 +103,9 @@ export default function SearchPage() {
           </div>
 
           {/* Quick Filters */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
             <Select value={listingType} onValueChange={setListingType}>
-              <SelectTrigger className="w-fit h-9 gap-2 rounded-full border-2 border-border/50 bg-background px-4 font-bold text-xs uppercase tracking-wider">
+              <SelectTrigger className="w-fit h-10 gap-2 rounded-xl border-border/60 bg-background px-4 font-semibold text-[13px] hover:bg-secondary/20 transition-colors">
                 <SelectValue placeholder="Listing Type" />
               </SelectTrigger>
               <SelectContent>
@@ -117,7 +117,7 @@ export default function SearchPage() {
             </Select>
 
             <Select value={propertyType} onValueChange={setPropertyType}>
-              <SelectTrigger className="w-fit h-9 gap-2 rounded-full border-2 border-border/50 bg-background px-4 font-bold text-xs uppercase tracking-wider">
+              <SelectTrigger className="w-fit h-10 gap-2 rounded-xl border-border/60 bg-background px-4 font-semibold text-[13px] hover:bg-secondary/20 transition-colors">
                 <SelectValue placeholder="Property Type" />
               </SelectTrigger>
               <SelectContent>
@@ -128,18 +128,19 @@ export default function SearchPage() {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" className="h-9 px-4 rounded-full border-2 border-border/50 bg-background font-bold text-xs uppercase tracking-wider gap-2">
-              Price Range
-              <ChevronDown size={14} />
+            <Button variant="outline" className="h-10 px-4 rounded-xl border-border/60 bg-background font-semibold text-[13px] gap-2 hover:bg-secondary/20">
+              Price
+              <ChevronDown size={14} className="opacity-50" />
             </Button>
 
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" className="h-9 px-4 rounded-full border-2 border-primary/20 bg-primary/5 text-primary font-bold text-xs uppercase tracking-wider gap-2 hover:bg-primary/10 transition-all">
+                <Button variant="outline" className="h-10 px-4 rounded-xl border-primary/20 bg-primary/5 text-primary font-semibold text-[13px] gap-2 hover:bg-primary/10 transition-all">
                   <SlidersHorizontal size={14} />
-                  Filters
+                  More filters
                 </Button>
               </SheetTrigger>
+
               <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
                 <SheetHeader className="p-6 border-b border-border/50">
                   <SheetTitle className="text-2xl font-black tracking-tight">Advanced Filters</SheetTitle>
@@ -291,19 +292,19 @@ export default function SearchPage() {
       <main className="flex-1 overflow-hidden">
         {viewMode === 'grid' ? (
           <ScrollArea className="h-full">
-            <Container className="py-6 space-y-6">
+            <Container className="py-8 space-y-8">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-muted-foreground">
+                <h2 className="text-[15px] font-semibold text-muted-foreground">
                   Showing <span className="text-foreground">{filteredProperties.length}</span> properties
                 </h2>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-muted-foreground">Sort by:</span>
-                  <Button variant="ghost" size="sm" className="font-bold underline decoration-2 underline-offset-4">Newest first</Button>
+                  <span className="text-[13px] font-medium text-muted-foreground">Sort by:</span>
+                  <Button variant="ghost" size="sm" className="font-semibold text-[13px] h-8 px-2 hover:bg-secondary/50">Newest first</Button>
                 </div>
               </div>
 
               {filteredProperties.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 gap-y-8">
                   {filteredProperties.map((property) => (
                     <PropertyCard key={property.id} property={property as any} />
                   ))}

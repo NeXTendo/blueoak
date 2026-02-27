@@ -1,7 +1,6 @@
 import { useLocation } from 'react-router-dom'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import BottomNav from './BottomNav'
-import DesktopSidebar from './DesktopSidebar'
 import { TopHeader } from './TopHeader'
 import { ROUTES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
@@ -15,29 +14,32 @@ const NO_NAV_ROUTES = [
 
 interface Props { children: React.ReactNode }
 
+import Footer from './Footer'
+
 export default function AppShell({ children }: Props) {
   const location = useLocation()
   const isMobile = useIsMobile()
 
   // Show nav on all pages except auth/onboarding pages (guests included)
   const showNav = !NO_NAV_ROUTES.includes(location.pathname as typeof ROUTES.SPLASH)
+  
+  // Show header and footer only on homepage
+  const isHomePage = location.pathname === ROUTES.HOME
 
   return (
     <div className="flex min-h-screen bg-background selection:bg-primary selection:text-primary-foreground">
-      {/* Desktop sidebar */}
-      {showNav && !isMobile && <DesktopSidebar />}
-
       {/* Main content */}
       <main className={cn(
-        "flex-1 transition-all duration-500 min-w-0 flex flex-col",
-        showNav && !isMobile ? 'pl-72' : '',
-        showNav && isMobile ? 'pb-32' : ''
+        "flex-1 min-w-0 flex flex-col",
+        showNav && isMobile ? 'pb-16' : ''
       )}>
-        {showNav && !isMobile && <TopHeader />}
+        {isHomePage && showNav && <TopHeader />}
         
-        <div className="flex-1 relative overflow-auto">
+        <div className="flex-1 relative">
           {children}
         </div>
+
+        {isHomePage && showNav && <Footer />}
       </main>
 
       {/* Mobile bottom nav */}

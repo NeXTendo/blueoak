@@ -1,5 +1,7 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "rewrites": [
+    { "source": "/((?!api|assets|static|.*\\..*).*)", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/sw.js",
