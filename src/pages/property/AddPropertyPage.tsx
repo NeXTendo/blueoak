@@ -56,7 +56,18 @@ export default function AddPropertyPage() {
   const [formData, setFormData] = useState<any>({
     listing_type: 'sale',
     property_type: 'house',
-    currency: 'USD',
+    floor_area: '',
+    currency: 'ZMW',
+    price_zmw: '',
+    price_usd: '',
+    price_zar: '',
+    price_kes: '',
+    price_bwp: '',
+    price_ngn: '',
+    price_ghs: '',
+    price_eur: '',
+    price_gbp: '',
+    monthly_rent: '',
     amenities: [],
     tags: [],
     status: 'pending',
@@ -84,16 +95,22 @@ export default function AddPropertyPage() {
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1))
 
   const handleFinalSubmit = async () => {
+    console.log('[AddPropertyPage] handleFinalSubmit initiated');
     if (!userId) {
+      console.error('[AddPropertyPage] Submission blocked: User is not logged in.');
       toast.error('You must be logged in to list a property')
       return
     }
 
     try {
       setIsSubmitting(true)
+      console.log('[AddPropertyPage] Preparing data payload...');
       
       const { media, documents, ...propertyData } = formData
       
+      console.log('[AddPropertyPage] Calling create_property_listing RPC...');
+      console.log('Payload:', { propertyData, media, documents });
+
       const { error } = await supabase.rpc('create_property_listing', {
         p_property_data: {
           ...propertyData,
@@ -104,16 +121,20 @@ export default function AddPropertyPage() {
         p_documents: documents || []
       } as any)
 
+      console.log('[AddPropertyPage] RPC response received. Error:', error);
+
       if (error) throw error
       
+      console.log('[AddPropertyPage] Submission successful.');
       toast.success('Property listing initiated for verification!')
       // Redirect to the property detail or my listings
       navigate(ROUTES.MESSAGES) // Or wherever appropriate, maybe /my-listings if it exists
     } catch (error: any) {
-      console.error('Error submitting property:', error)
+      console.error('[AddPropertyPage] Caught exception during submission:', error)
       toast.error(error.message || 'Failed to submit property. Please verify your data.')
     } finally {
       setIsSubmitting(false)
+      console.log('[AddPropertyPage] handleFinalSubmit concluded.');
     }
   }
 
@@ -208,10 +229,11 @@ export default function AddPropertyPage() {
 
                 {currentStep < STEPS.length ? (
                    <Button 
+                     disabled={currentStep === 6 && formData._hasActiveUploads}
                      onClick={nextStep} 
                      className="h-12 md:h-16 px-8 md:px-12 rounded-xl md:rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] md:text-xs gap-4 shadow-xl md:shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all w-full sm:w-auto"
                    >
-                      Proceed: {STEPS[currentStep].title}
+                      {currentStep === 6 && formData._hasActiveUploads ? 'Awaiting Uploads...' : `Proceed: ${STEPS[currentStep].title}`}
                       <ChevronRight size={18} />
                    </Button>
                 ) : (

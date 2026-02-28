@@ -41,10 +41,12 @@ import Container from '@/components/layout/Container'
 import { cn } from '@/lib/utils'
 import InteractiveMap from '@/components/common/InteractiveMap'
 import EmptyState from '@/components/common/EmptyState'
+import { useFormatPrice } from '@/hooks/useFormatPrice'
 
 export default function SearchPage() {
   const { t } = useTranslation()
   const [searchParams] = useSearchParams()
+  const { formatBig } = useFormatPrice()
   const { 
     filters, setFilters, 
     searchQuery, setSearchQuery, 
@@ -412,7 +414,7 @@ export default function SearchPage() {
               id: p.id,
               label: p.title,
               position: [p.latitude || 0, p.longitude || 0],
-              price: p.asking_price?.toString() || p.monthly_rent?.toString() || 'Contact'
+              price: formatBig(p.price_zmw || p.asking_price || 0)
             }))}
           />
         )}
@@ -423,19 +425,13 @@ export default function SearchPage() {
 
 /** Large featured card — mirrors James Edition's big editorial cards */
 function FeaturedPropertyCard({ property }: { property: any }) {
+  const { formatBig } = useFormatPrice()
   const img = property.cover_image_url 
     || property.images?.[0] 
     || 'https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=2000'
 
-  const price = property.asking_price || property.monthly_rent || property.price
-  const formattedPrice = price
-    ? price >= 1_000_000
-      ? `$${(price / 1_000_000).toFixed(1)}M`
-      : `$${price.toLocaleString()}`
-    : 'Price on Request'
-
   return (
-    <Link to={`${ROUTES.PROPERTY_DETAIL}/${property.id}`} className="group block">
+    <Link to={ROUTES.PROPERTY_DETAIL.replace(':slug', property.slug)} className="group block">
       <div className="relative h-[380px] md:h-[440px] rounded-md overflow-hidden bg-charcoal">
         {/* Image */}
         <img
@@ -462,7 +458,7 @@ function FeaturedPropertyCard({ property }: { property: any }) {
           </h3>
           <div className="flex items-center justify-between pt-1">
             <span className="text-[hsl(var(--gold))] font-semibold text-xl tracking-tight">
-              {formattedPrice}
+              {formatBig(property.price_zmw || property.asking_price || 0)}
             </span>
             {property.bedrooms != null && (
               <span className="text-white/50 text-sm">

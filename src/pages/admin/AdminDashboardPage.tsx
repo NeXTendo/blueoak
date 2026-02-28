@@ -17,9 +17,13 @@ import { useAdminStats } from '@/hooks/useAdmin'
 import AdminHeader from '@/components/admin/AdminHeader'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { useCurrencyStore } from '@/stores/currencyStore'
+import { useFormatPrice } from '@/hooks/useFormatPrice'
 
 export default function AdminDashboardPage() {
-  const { data: stats, isLoading } = useAdminStats()
+  const currency = useCurrencyStore((s) => s.currency)
+  const { format } = useFormatPrice()
+  const { data: stats, isLoading } = useAdminStats(currency)
 
   if (isLoading) {
     return (
@@ -51,7 +55,7 @@ export default function AdminDashboardPage() {
     },
     {
       title: 'Total Revenue',
-      value: `K${(stats?.total_revenue || 0).toLocaleString()}`,
+      value: stats?.total_revenue ? format({ asking_price: stats.total_revenue }) : '0',
       icon: TrendingUp,
       trend: '+18%',
       trendUp: true,

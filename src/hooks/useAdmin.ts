@@ -23,11 +23,11 @@ export interface AdminUser {
   avatar_url: string | null
 }
 
-export function useAdminStats() {
+export function useAdminStats(currency: string = 'ZMW') {
   return useQuery({
-    queryKey: ['admin', 'stats'],
+    queryKey: ['admin', 'stats', currency],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_admin_stats')
+      const { data, error } = await (supabase as any).rpc('get_admin_dashboard_stats', { p_currency: currency })
       if (error) throw error
       return data as AdminStats
     }

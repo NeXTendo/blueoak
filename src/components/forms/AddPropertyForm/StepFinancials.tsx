@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
-import { CURRENCIES } from '@/lib/constants'
 import { motion } from 'framer-motion'
 
 interface StepFinancialsProps {
@@ -18,7 +17,6 @@ interface StepFinancialsProps {
 }
 
 export default function StepFinancials({ data, updateData }: StepFinancialsProps) {
-  const isSale = data.listing_type === 'sale'
   const isAuction = data.listing_type === 'auction'
   const isRent = data.listing_type === 'rent'
   const isShortTerm = data.listing_type === 'short_term'
@@ -31,62 +29,140 @@ export default function StepFinancials({ data, updateData }: StepFinancialsProps
       exit={{ opacity: 0, x: -20 }}
       className="space-y-8"
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="space-y-2">
-          <Label className="text-[10px] font-black uppercase tracking-widest">Currency</Label>
-          <Select 
-            value={data.currency} 
-            onValueChange={(v) => updateData({ currency: v })}
-          >
-            <SelectTrigger className="h-14 rounded-xl border-2 bg-secondary/10">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CURRENCIES.map(c => (
-                <SelectItem key={c.code} value={c.code}>{c.code} ({c.symbol})</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <Label className="text-[12px] font-black uppercase tracking-widest text-primary">Core Valuation (Required)</Label>
+          <p className="text-[10px] text-muted-foreground font-medium italic">
+            To ensure precise analytics and eliminate conversion errors, please provide the {isRent || isLease ? 'monthly rent' : isShortTerm ? 'nightly rate' : 'asking price'} explicitly in all supported currencies.
+          </p>
         </div>
 
-        {(isSale || isAuction) && (
-          <div className="md:col-span-2 space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-widest">Asking Price</Label>
-            <Input 
-              type="number" 
-              placeholder="0.00" 
-              className="h-14 rounded-xl border-2 bg-secondary/10 font-bold"
-              value={data.asking_price || ''}
-              onChange={(e) => updateData({ asking_price: parseFloat(e.target.value) })}
-            />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">ZMW (Zambian Kwacha)</Label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">ZK</span>
+              <Input 
+                type="number" 
+                placeholder="0.00" 
+                className="h-14 rounded-xl border-2 bg-secondary/10 font-bold pl-12"
+                value={data.price_zmw || ''}
+                onChange={(e) => updateData({ price_zmw: parseFloat(e.target.value) })}
+              />
+            </div>
           </div>
-        )}
 
-        {(isRent || isLease) && (
-          <div className="md:col-span-2 space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-widest">Monthly Rent</Label>
-            <Input 
-              type="number" 
-              placeholder="0.00" 
-              className="h-14 rounded-xl border-2 bg-secondary/10 font-bold"
-              value={data.monthly_rent || ''}
-              onChange={(e) => updateData({ monthly_rent: parseFloat(e.target.value) })}
-            />
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">USD (US Dollar)</Label>
+            <div className="relative">
+             <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">$</span>
+              <Input 
+                type="number" 
+                placeholder="0.00" 
+                className="h-14 rounded-xl border-2 bg-secondary/10 font-bold pl-10"
+                value={data.price_usd || ''}
+                onChange={(e) => updateData({ price_usd: parseFloat(e.target.value) })}
+              />
+            </div>
           </div>
-        )}
 
-        {isShortTerm && (
-          <div className="md:col-span-2 space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-widest">Nightly Rate (Base)</Label>
-            <Input 
-              type="number" 
-              placeholder="0.00" 
-              className="h-14 rounded-xl border-2 bg-secondary/10 font-bold"
-              value={data.nightly_rate || ''}
-              onChange={(e) => updateData({ nightly_rate: parseFloat(e.target.value) })}
-            />
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">ZAR (South African Rand)</Label>
+            <div className="relative">
+             <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">R</span>
+              <Input 
+                type="number" 
+                placeholder="0.00" 
+                className="h-14 rounded-xl border-2 bg-secondary/10 font-bold pl-10"
+                value={data.price_zar || ''}
+                onChange={(e) => updateData({ price_zar: parseFloat(e.target.value) })}
+              />
+            </div>
           </div>
-        )}
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">KES (Kenyan Shilling)</Label>
+            <div className="relative">
+             <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground/80 text-xs">KSh</span>
+              <Input 
+                type="number" 
+                placeholder="0.00" 
+                className="h-14 rounded-xl border-2 bg-secondary/10 font-bold pl-12"
+                value={data.price_kes || ''}
+                onChange={(e) => updateData({ price_kes: parseFloat(e.target.value) })}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">BWP (Botswana Pula)</Label>
+            <div className="relative">
+             <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">P</span>
+              <Input 
+                type="number" 
+                placeholder="0.00" 
+                className="h-14 rounded-xl border-2 bg-secondary/10 font-bold pl-10"
+                value={data.price_bwp || ''}
+                onChange={(e) => updateData({ price_bwp: parseFloat(e.target.value) })}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">NGN (Nigerian Naira)</Label>
+            <div className="relative">
+             <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground/80 text-xs">₦</span>
+              <Input 
+                type="number" 
+                placeholder="0.00" 
+                className="h-14 rounded-xl border-2 bg-secondary/10 font-bold pl-10"
+                value={data.price_ngn || ''}
+                onChange={(e) => updateData({ price_ngn: parseFloat(e.target.value) })}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">GHS (Ghanaian Cedi)</Label>
+            <div className="relative">
+             <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground/80 text-xs">GH₵</span>
+              <Input 
+                type="number" 
+                placeholder="0.00" 
+                className="h-14 rounded-xl border-2 bg-secondary/10 font-bold pl-12"
+                value={data.price_ghs || ''}
+                onChange={(e) => updateData({ price_ghs: parseFloat(e.target.value) })}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">EUR (Euro)</Label>
+            <div className="relative">
+             <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground/80 text-xs">€</span>
+              <Input 
+                type="number" 
+                placeholder="0.00" 
+                className="h-14 rounded-xl border-2 bg-secondary/10 font-bold pl-10"
+                value={data.price_eur || ''}
+                onChange={(e) => updateData({ price_eur: parseFloat(e.target.value) })}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">GBP (British Pound)</Label>
+            <div className="relative">
+             <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground/80 text-xs">£</span>
+              <Input 
+                type="number" 
+                placeholder="0.00" 
+                className="h-14 rounded-xl border-2 bg-secondary/10 font-bold pl-10"
+                value={data.price_gbp || ''}
+                onChange={(e) => updateData({ price_gbp: parseFloat(e.target.value) })}
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-6">

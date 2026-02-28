@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Heart, MapPin, Bed, Bath, Maximize, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
+import { useFormatPrice } from '@/hooks/useFormatPrice'
 
 interface PropertyCardProps {
   property: any
@@ -11,8 +12,8 @@ interface PropertyCardProps {
 
 const PropertyCard = memo(function PropertyCard({ property, className }: PropertyCardProps) {
   const navigate = useNavigate()
+  const { format } = useFormatPrice()
 
-  const price = property.asking_price || property.monthly_rent || property.nightly_rate || property.price || 0
   const title = property.title || 'Property Listing'
   const location = [property.suburb, property.city].filter(Boolean).join(', ') || property.location || 'Unknown'
   const beds = property.bedrooms || property.beds || 0
@@ -22,17 +23,6 @@ const PropertyCard = memo(function PropertyCard({ property, className }: Propert
   const isVerified = property.seller_verified || property.isVerified
   const isFeatured = property.is_featured || property.isFeatured
   const listingType = property.listing_type || property.listingType || 'sale'
-  const currency = property.currency || 'ZMW'
-
-  const formatPrice = (p: number) => {
-    if (!p) return 'Price on Request'
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: 0,
-      notation: p >= 1_000_000 ? 'compact' : 'standard',
-    }).format(p)
-  }
 
   const listingLabel: Record<string, string> = {
     sale: 'For Sale',
@@ -46,7 +36,7 @@ const PropertyCard = memo(function PropertyCard({ property, className }: Propert
     <div
       onClick={() => navigate(ROUTES.PROPERTY_DETAIL.replace(':slug', property.slug))}
       className={cn(
-        "group cursor-pointer overflow-hidden rounded-sm bg-card border border-border",
+        "group cursor-pointer overflow-hidden rounded-none bg-card border border-border",
         "transition-all duration-300 ease-out",
         "md:hover:shadow-card-hover md:hover:-translate-y-1",
         className
@@ -107,7 +97,7 @@ const PropertyCard = memo(function PropertyCard({ property, className }: Propert
                 {listingType === 'rent' ? 'Per Month' : listingType === 'short_term' ? 'Per Night' : 'Asking Price'}
               </p>
               <p className="font-sans text-white text-lg md:text-xl font-semibold tracking-tight drop-shadow-lg">
-                {formatPrice(price)}
+                {format(property, listingType === 'short_term')}
               </p>
             </div>
             {isVerified && (

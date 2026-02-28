@@ -8,6 +8,8 @@ import { queryClient } from '@/lib/queryClient'
 import { useAuthInit } from '@/hooks/useAuth'
 import { useUIStore }  from '@/stores/uiStore'
 
+import { AdminNotifier } from '@/components/admin/AdminNotifier'
+
 function AppProviders({ children }: { children: React.ReactNode }) {
   // Sync theme class on mount
   const theme = useUIStore((s) => s.theme)
@@ -18,7 +20,12 @@ function AppProviders({ children }: { children: React.ReactNode }) {
   // Initialise Supabase auth listener
   useAuthInit()
 
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      <AdminNotifier />
+    </>
+  )
 }
 
 export default function App() {

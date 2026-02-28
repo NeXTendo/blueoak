@@ -24,6 +24,18 @@ export type Property = Database['public']['Tables']['properties']['Row'] & {
   auction_end_date?: string | null
   auction_type?: 'online' | 'in_person' | 'hybrid'
   auction_venue?: string | null
+  
+  // Explicit Multi-Currency Fields
+  price_zmw?: number | null
+  price_usd?: number | null
+  price_zar?: number | null
+  price_kes?: number | null
+  price_bwp?: number | null
+  price_ngn?: number | null
+  price_ghs?: number | null
+  price_eur?: number | null
+  price_gbp?: number | null
+  
   province?: string | null
   suburb?: string | null
   street_address?: string | null

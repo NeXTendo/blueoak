@@ -14,12 +14,14 @@ import {
   Users,
   AlertTriangle,
   Settings,
-  ShieldCheck
+  ShieldCheck,
+  Check
 } from 'lucide-react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { useAuth } from '@/hooks/useAuth'
 import { useRole } from '@/hooks/useRole'
+import { useCurrencyStore, CurrencyCode } from '@/stores/currencyStore'
 import { ROUTES, APP_NAME, PROPERTY_TYPES } from '@/lib/constants'
 import {
   DropdownMenu,
@@ -54,6 +56,12 @@ export function TopHeader() {
   const { isAdmin } = useRole()
   const [isScrolled, setIsScrolled] = useState(false)
   const isHomePage = location.pathname === ROUTES.HOME
+  const { currency: globalCurrency, setCurrency } = useCurrencyStore()
+
+  const handleCurrencyChange = (c: CurrencyCode) => {
+    setCurrency(c)
+    window.location.reload()
+  }
 
   const [authModal, setAuthModal] = useState<{ open: boolean; tab: 'login' | 'register' }>({ open: false, tab: 'login' })
   const openLogin = () => setAuthModal({ open: true, tab: 'login' })
@@ -179,6 +187,31 @@ export function TopHeader() {
 
         {/* Right: Actions */}
         <div className="flex-1 flex items-center justify-end gap-5">
+          {/* Currency Switcher */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className={cn(
+                "hidden lg:flex items-center gap-1.5 text-sm font-bold transition-colors uppercase tracking-widest",
+                isScrolled || !isHomePage ? "text-foreground/70 hover:text-[hsl(var(--gold))]" : "text-white/80 hover:text-white"
+              )}>
+                {globalCurrency}
+                <ChevronDown size={12} className="opacity-50" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-32 rounded-xl border-border/50">
+              {(['ZMW', 'USD', 'ZAR', 'KES', 'BWP', 'NGN', 'GHS', 'EUR', 'GBP'] as CurrencyCode[]).map((c) => (
+                <DropdownMenuItem 
+                  key={c}
+                  onClick={() => handleCurrencyChange(c)}
+                  className="font-bold cursor-pointer justify-between"
+                >
+                  {c}
+                  {globalCurrency === c && <Check size={14} className="text-primary" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {isAdmin ? (
             <Link
               to={ROUTES.ADMIN}

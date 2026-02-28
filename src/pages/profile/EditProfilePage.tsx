@@ -16,6 +16,8 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useCurrencyStore, CurrencyCode } from '@/stores/currencyStore'
 import { ROUTES } from '@/lib/constants'
 import Container from '@/components/layout/Container'
 
@@ -285,6 +287,24 @@ export default function EditProfilePage() {
                     className="w-full h-16 pl-16 pr-8 bg-background border-2 border-secondary rounded-[2rem] text-lg font-black tracking-tight placeholder:text-muted-foreground/20 focus:border-primary focus:ring-0 transition-all outline-none"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/60 ml-1">Preferred Trading Currency</label>
+                <Select 
+                  value={useCurrencyStore.getState().currency} 
+                  onValueChange={(v) => useCurrencyStore.getState().setCurrency(v as CurrencyCode)}
+                >
+                  <SelectTrigger className="w-full h-16 px-8 bg-background border-2 border-secondary rounded-[2rem] text-lg font-black tracking-tight focus:border-primary focus:ring-0 transition-all outline-none">
+                    <SelectValue placeholder="Select Currency" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl border-secondary">
+                    {(['ZMW', 'USD', 'ZAR', 'KES', 'BWP', 'NGN', 'GHS', 'EUR', 'GBP'] as CurrencyCode[]).map(c => (
+                      <SelectItem key={c} value={c} className="font-bold cursor-pointer py-3">{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40 italic ml-4">This setting synchronizes globally across all BlueOak terminals.</p>
               </div>
             </section>
 

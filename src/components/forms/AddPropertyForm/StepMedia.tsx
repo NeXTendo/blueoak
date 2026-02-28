@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Label } from '@/components/ui/label'
 import { Image as ImageIcon, Video, FileText, Upload, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -31,23 +31,33 @@ export default function StepMedia({ data, updateData }: StepMediaProps) {
   const { userId } = useAuth()
 
   const handleUpload = async (files: File[], bucket: string, type: 'image' | 'video' | 'document') => {
+    console.log(`[StepMedia] handleUpload initiated for ${files.length} files. Bucket: ${bucket}, Type: ${type}`);
     if (!userId) {
+      console.error('[StepMedia] handleUpload failed: User is not logged in.');
       toast.error('You must be logged in to upload files')
       return
     }
 
     for (const file of files) {
       const id = Math.random().toString(36).substring(7)
+      console.log(`[StepMedia] Processing file: ${file.name} (Size: ${file.size}, ID: ${id})`);
       setUploads(prev => ({
         ...prev,
         [id]: { id, file, progress: 10, status: 'uploading' }
       }))
 
       try {
+        console.log(`[StepMedia] Calling uploadFile for ${file.name}...`);
         // RLS policy requires path to start with userId: auth.uid()::text = (storage.foldername(name))[1]
         const result = await uploadFile(bucket, file, `${userId}/listings`)
-        if (result.error) throw new Error(result.error)
+        console.log(`[StepMedia] uploadFile result for ${file.name}:`, result);
+        
+        if (result.error) {
+           console.error(`[StepMedia] uploadFile returned an error object for ${file.name}:`, result.error);
+           throw new Error(result.error);
+        }
 
+        console.log(`[StepMedia] Upload successful for ${file.name}. URL: ${result.url}`);
         setUploads(prev => ({
           ...prev,
           [id]: { ...prev[id], status: 'completed', progress: 100, url: result.url }
@@ -61,13 +71,16 @@ export default function StepMedia({ data, updateData }: StepMediaProps) {
             media: [...currentMedia, { url: result.url, type, order: currentMedia.length, is_cover: isFirstImage }],
             ...(isFirstImage ? { cover_image_url: result.url } : {})
           })
+          console.log(`[StepMedia] State updated with new media item.`);
         } else {
           const currentDocs = data.documents || []
           updateData({ 
             documents: [...currentDocs, { url: result.url, name: file.name, size: file.size }] 
           })
+          console.log(`[StepMedia] State updated with new document.`);
         }
       } catch (err: any) {
+        console.error(`[StepMedia] Caught exception during upload of ${file.name}:`, err);
         setUploads(prev => ({
           ...prev,
           [id]: { ...prev[id], status: 'error' }
@@ -93,6 +106,16 @@ export default function StepMedia({ data, updateData }: StepMediaProps) {
       toast.error('Failed to remove file from storage')
     }
   }
+
+  // Expose upload status to parent component using a callback or just store
+  // To avoid prop drilling, we can check if there are any uploading files locally
+  const hasActiveUploads = Object.values(uploads).some(u => u.status === 'uploading')
+
+  // We need to inform the parent if uploads are active to disable the next button
+  // A cleaner way is just updating the form data with a transient `_hasActiveUploads` flag
+  useEffect(() => {
+    updateData({ _hasActiveUploads: hasActiveUploads })
+  }, [hasActiveUploads])
 
   return (
     <motion.div 

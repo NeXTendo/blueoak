@@ -1,12 +1,15 @@
 import { Separator } from '@/components/ui/separator'
 import { motion } from 'framer-motion'
 import { Check, AlertCircle } from 'lucide-react'
+import { useFormatPrice } from '@/hooks/useFormatPrice'
 
 interface StepReviewProps {
   data: any
 }
 
 export default function StepReview({ data }: StepReviewProps) {
+  const { format } = useFormatPrice()
+  
   const getListingTypeLabel = () => {
     switch(data.listing_type) {
       case 'sale': return 'For Sale'
@@ -56,7 +59,7 @@ export default function StepReview({ data }: StepReviewProps) {
                  <Separator className="bg-secondary/40" />
                  <div className="flex justify-between items-center">
                     <span className="text-[10px] font-black uppercase tracking-tight text-muted-foreground/50">Valuation</span>
-                    <span className="text-sm font-black text-primary">{data.currency} {data.asking_price || data.monthly_rent || data.nightly_rate || '0'}</span>
+                    <span className="text-sm font-black text-primary">{format(data, data.listing_type === 'short_term')}</span>
                  </div>
               </div>
            </div>

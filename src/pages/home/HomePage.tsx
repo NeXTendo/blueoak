@@ -9,6 +9,8 @@ import { Loader2, ArrowRight, X } from 'lucide-react'
 import { ROUTES } from '@/lib/constants'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '@/stores/authStore'
+import { useCurrencyStore } from '@/stores/currencyStore'
+import { useFormatPrice } from '@/hooks/useFormatPrice'
 import AuthModal from '@/components/auth/AuthModal'
 
 const DEFAULT_HERO = 'https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=2000&auto=format&fit=crop'
@@ -38,6 +40,9 @@ export default function HomePage() {
     return () => clearTimeout(t)
   }, [session])
 
+  const { currency: globalCurrency } = useCurrencyStore()
+  const { formatBig } = useFormatPrice()
+
   const { data: homeData, isLoading: propsLoading } = useQuery({
     queryKey: ['home-data'],
     queryFn: async () => {
@@ -50,9 +55,9 @@ export default function HomePage() {
 
   // Fetch live platform stats
   const { data: statsData, isLoading: statsLoading } = useQuery({
-    queryKey: ['platform-stats'],
+    queryKey: ['platform-stats', globalCurrency],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_platform_stats')
+      const { data, error } = await (supabase as any).rpc('get_platform_stats', { p_currency: globalCurrency })
       if (error) throw error
       return data as { active_listings: number; countries: number; assets_value: number; verified_buyers: number }
     },
@@ -202,12 +207,7 @@ export default function HomePage() {
                   label: 'Countries' 
                 },
                 { 
-                  value: statsLoading ? '...' : (() => {
-                    const val = statsData?.assets_value || 0;
-                    if (val >= 1e9) return `$${(val / 1e9).toFixed(1)}B+`;
-                    if (val >= 1e6) return `$${(val / 1e6).toFixed(1)}M+`;
-                    return `$${val.toLocaleString()}+`;
-                  })(), 
+                  value: statsLoading ? '...' : formatBig(statsData?.assets_value || 0, globalCurrency), 
                   label: 'Assets Indexed' 
                 },
                 { 

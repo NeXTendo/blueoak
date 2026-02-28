@@ -1,5 +1,4 @@
 import { supabase } from './supabase'
-import { nanoid } from 'nanoid'
 
 export const BUCKETS = {
   PROPERTY_MEDIA: 'property-media',
@@ -18,16 +17,33 @@ export async function uploadFile(
   file: File,
   folder: string
 ): Promise<{ path: string; url: string; error?: string }> {
-  const ext  = file.name.split('.').pop() ?? 'bin'
-  const path = `${folder}/${nanoid()}.${ext}`
+  try {
+    const ext  = file.name.split('.').pop() ?? 'bin'
+    const uniqueId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(7)
+    const path = `${folder}/${uniqueId}.${ext}`
 
-  const { error } = await supabase.storage.from(bucket).upload(path, file, {
-    cacheControl: '3600',
-    upsert: false,
-  })
+    // 30 second timeout to prevent infinite hang
+    const uploadPromise = supabase.storage.from(bucket).upload(path, file, {
+      cacheControl: '3600',
+      upsert: false,
+    })
 
-  if (error) return { path: '', url: '', error: error.message }
-  return { path, url: getPublicUrl(bucket, path) }
+    const timeoutPromise = new Promise<{ data: any, error: any }>((_, reject) => 
+      setTimeout(() => reject(new Error('Upload timed out after 30 seconds')), 30000)
+    )
+
+    const { error } = await Promise.race([uploadPromise, timeoutPromise])
+
+    if (error) {
+       console.error(`[Storage] Upload failed for ${file.name}:`, error)
+       return { path: '', url: '', error: error.message || 'Unknown upload error' }
+    }
+    
+    return { path, url: getPublicUrl(bucket, path) }
+  } catch (err: any) {
+    console.error(`[Storage] Exception during upload for ${file.name}:`, err)
+    return { path: '', url: '', error: err.message || 'Upload exception occurred' }
+  }
 }
 
 export async function deleteFile(bucket: string, path: string): Promise<boolean> {
