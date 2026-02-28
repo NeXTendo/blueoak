@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
 
 interface CategoryCardProps {
   title: string
@@ -44,30 +46,43 @@ function CategoryCard({ title, propertyCount, image, link }: CategoryCardProps) 
 }
 
 export default function FeaturedCategories() {
+  const { data: counts, isLoading } = useQuery({
+    queryKey: ['featured-category-counts'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_feature_category_counts')
+      if (error) {
+        console.error("Error fetching category counts:", error)
+        return { villas: 0, penthouses: 0, student_accommodation: 0, land: 0 }
+      }
+      return data || { villas: 0, penthouses: 0, student_accommodation: 0, land: 0 }
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 mins
+  })
+
   const categories: CategoryCardProps[] = [
     {
       title: "Luxury Villas",
-      propertyCount: "124",
+      propertyCount: isLoading ? "..." : (counts?.villas || "0"),
       image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1000&auto=format&fit=crop",
-      link: "/search?type=House&min_price=1000000"
+      link: "/search?property_type=House&min_price=1000000"
     },
     {
       title: "Penthouses",
-      propertyCount: "45",
+      propertyCount: isLoading ? "..." : (counts?.penthouses || "0"),
       image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=1000&auto=format&fit=crop",
-      link: "/search?type=Apartment&min_price=500000"
+      link: "/search?property_type=Apartment&min_price=500000"
     },
     {
-      title: "Private Estates",
-      propertyCount: "28",
-      image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1000&auto=format&fit=crop",
-      link: "/search?type=House&min_area=1000"
+      title: "Student Living",
+      propertyCount: isLoading ? "..." : (counts?.student_accommodation || "0"),
+      image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop",
+      link: "/search?property_type=Student+Accommodation"
     },
     {
       title: "Prime Land",
-      propertyCount: "86",
+      propertyCount: isLoading ? "..." : (counts?.land || "0"),
       image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1000&auto=format&fit=crop",
-      link: "/search?type=Land"
+      link: "/search?property_type=Land"
     }
   ]
 
