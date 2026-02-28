@@ -12,14 +12,12 @@ if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KE
   )
 }
 
+console.log('[Supabase] Initializing client with URL:', supabaseUrl)
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
-    autoRefreshToken: true,
     persistSession: true,
+    autoRefreshToken: true,
     detectSessionInUrl: true,
     storageKey: 'blueoak-supabase-session',
-  },
-  realtime: {
-    params: { eventsPerSecond: 10 },
   },
 })

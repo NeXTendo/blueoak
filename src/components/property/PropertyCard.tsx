@@ -1,103 +1,155 @@
-import { Heart, Bed, Bath, Maximize, MapPin, CheckCircle2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Heart, MapPin, Bed, Bath, Maximize, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ROUTES } from '@/lib/constants'
 
 interface PropertyCardProps {
-  property: {
-    id: string
-    title: string
-    price: number
-    currency: string
-    location: string
-    beds: number
-    baths: number
-    sqm: number
-    image: string
-    type: string
-    listingType: 'sale' | 'rent' | 'short_term' | 'auction'
-    isVerified?: boolean
-    isFeatured?: boolean
-  }
+  property: any
+  className?: string
 }
 
-export default function PropertyCard({ property }: PropertyCardProps) {
-  const formatPrice = (price: number, currency: string) => {
+export default function PropertyCard({ property, className }: PropertyCardProps) {
+  const navigate = useNavigate()
+
+  const price = property.asking_price || property.monthly_rent || property.nightly_rate || property.price || 0
+  const title = property.title || 'Property Listing'
+  const location = [property.suburb, property.city].filter(Boolean).join(', ') || property.location || 'Unknown'
+  const beds = property.bedrooms || property.beds || 0
+  const baths = property.bathrooms || property.baths || 0
+  const sqm = property.floor_area || property.sqm || 0
+  const imageUrl = property.cover_image_url || property.media?.[0]?.url || property.image || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=800&auto=format&fit=crop'
+  const isVerified = property.seller_verified || property.isVerified
+  const isFeatured = property.is_featured || property.isFeatured
+  const listingType = property.listing_type || property.listingType || 'sale'
+  const currency = property.currency || 'ZMW'
+
+  const formatPrice = (p: number) => {
+    if (!p) return 'Price on Request'
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency,
+      currency,
       maximumFractionDigits: 0,
-    }).format(price)
+      notation: p >= 1_000_000 ? 'compact' : 'standard',
+    }).format(p)
+  }
+
+  const listingLabel: Record<string, string> = {
+    sale: 'For Sale',
+    rent: 'To Let',
+    short_term: 'Short Term',
+    lease: 'Lease',
+    auction: 'Auction',
   }
 
   return (
-    <div className="group flex flex-col bg-background transition-all duration-300 min-w-0">
-      {/* Media Section */}
-      <div className="relative aspect-[4/4] overflow-hidden rounded-xl bg-secondary/10">
-        <img 
-          src={property.image} 
-          alt={property.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+    <div
+      onClick={() => navigate(ROUTES.PROPERTY_DETAIL.replace(':slug', property.slug))}
+      className={cn(
+        "group cursor-pointer overflow-hidden rounded-sm bg-card border border-border",
+        "transition-all duration-300 ease-out",
+        "md:hover:shadow-card-hover md:hover:-translate-y-1",
+        className
+      )}
+    >
+      {/* Cinematic Image with Overlay */}
+      <div className="relative aspect-[4/3] md:aspect-[3/2] overflow-hidden bg-secondary">
+        <img
+          src={imageUrl}
+          alt={title}
+          loading="lazy"
+          className="w-full h-full object-cover transition-transform duration-700 ease-out md:group-hover:scale-105"
         />
-        
-        {/* Status Badges */}
-        <div className="absolute top-2 left-2 flex flex-col gap-1 pointer-events-none">
-          {property.isFeatured && (
-            <div className="bg-white/95 backdrop-blur-md text-black text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow-sm">
-              Featured
-            </div>
-          )}
-          <div className={cn(
-            "text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow-sm backdrop-blur-md",
-            property.listingType === 'sale' ? "bg-primary text-primary-foreground" : "bg-white/90 text-black"
+
+        {/* Cinematic scrim — bottom up */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+
+        {/* Top Badges */}
+        <div className="absolute top-3 left-3 flex items-center gap-2">
+          <span className={cn(
+            "je-badge text-white",
+            listingType === 'sale' ? "bg-charcoal/80 backdrop-blur-sm" :
+            listingType === 'auction' ? "bg-red-900/80 backdrop-blur-sm" :
+            "bg-[hsl(var(--gold)/0.9)] backdrop-blur-sm"
           )}>
-            {property.listingType === 'sale' ? 'Sale' : (property.listingType.charAt(0).toUpperCase() + property.listingType.slice(1))}
+            {listingLabel[listingType] || listingType}
+          </span>
+          {isFeatured && (
+            <span className="je-badge bg-[hsl(var(--gold))] text-white">
+              Featured
+            </span>
+          )}
+        </div>
+
+        {/* Save Button */}
+        <button
+          onClick={(e) => { 
+            e.stopPropagation();
+            // Add full save logic here later
+          }}
+          title={property.is_saved ? "Remove from saved" : "Save"}
+          aria-label={property.is_saved ? "Remove from saved" : "Save"}
+          className={cn(
+            "absolute top-3 right-3 h-8 w-8 rounded-full flex items-center justify-center",
+            "bg-black/20 backdrop-blur-md border border-white/20",
+            "transition-all duration-200 hover:bg-black/40",
+            property.is_saved ? "text-[hsl(var(--gold))]" : "text-white"
+          )}
+        >
+          <Heart size={14} className={cn(property.is_saved && "fill-[hsl(var(--gold))]")} />
+        </button>
+
+        {/* Price — on the image, bottom left */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="font-serif text-white/80 text-[10px] uppercase tracking-[0.12em] mb-1 drop-shadow-md">
+                {listingType === 'rent' ? 'Per Month' : listingType === 'short_term' ? 'Per Night' : 'Asking Price'}
+              </p>
+              <p className="font-sans text-white text-lg md:text-xl font-semibold tracking-tight drop-shadow-lg">
+                {formatPrice(price)}
+              </p>
+            </div>
+            {isVerified && (
+              <ShieldCheck className="text-[hsl(var(--gold))] h-5 w-5 shrink-0 mb-0.5 drop-shadow-md" />
+            )}
           </div>
         </div>
-
-        <button 
-          title="Save to favorites"
-          className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"
-        >
-          <Heart size={12} strokeWidth={2.5} />
-        </button>
       </div>
 
-      {/* Content Section */}
-      <div className="py-2 flex flex-col gap-0.5">
-        <div className="flex items-start justify-between gap-1">
-          <h3 className="text-[12px] font-medium text-foreground line-clamp-1">
-            {property.title}
-          </h3>
-          {property.isVerified && (
-            <CheckCircle2 size={11} className="text-primary shrink-0 mt-0.5" strokeWidth={3} />
-          )}
-        </div>
-
-        <div className="flex items-center gap-1 text-muted-foreground/60 text-[10px] font-medium leading-none">
-          <MapPin size={9} strokeWidth={2} className="shrink-0" />
-          <span className="truncate">{property.location}</span>
-        </div>
-
-        <div className="flex items-center gap-2 text-muted-foreground/40 text-[9px] font-bold mt-0.5">
-           <div className="flex items-center gap-1">
-             <Bed size={10} strokeWidth={2.5} />
-             <span>{property.beds}</span>
-           </div>
-           <div className="flex items-center gap-1">
-             <Bath size={10} strokeWidth={2.5} />
-             <span>{property.baths}</span>
-           </div>
-           <div className="flex items-center gap-1">
-             <Maximize size={10} strokeWidth={2.5} />
-             <span>{property.sqm}m²</span>
-           </div>
-        </div>
-
-        <div className="mt-0.5 flex items-baseline gap-1">
-          <span className="text-[13px] font-semibold text-foreground">
-            {formatPrice(property.price, property.currency)}
+      {/* Card Content */}
+      <div className="p-5">
+        <div className="flex items-start gap-1 mb-2">
+          <MapPin className="h-3 w-3 text-[hsl(var(--gold))] mt-0.5 shrink-0" />
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.15em] leading-none">
+            {location}
           </span>
-          {property.listingType === 'rent' && <span className="text-[9px] font-medium text-muted-foreground">/mo</span>}
         </div>
+        <h3 className="font-serif text-foreground text-lg leading-[1.3] line-clamp-2 mb-4 group-hover:text-[hsl(var(--gold))] transition-colors duration-200">
+          {title}
+        </h3>
+
+        {(beds > 0 || baths > 0 || sqm > 0) && (
+          <div className="flex items-center gap-4 border-t border-border/50 pt-4">
+            {beds > 0 && (
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Bed className="h-3.5 w-3.5 opacity-70" />
+                <span className="text-xs font-medium">{beds}</span>
+              </div>
+            )}
+            {baths > 0 && (
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Bath className="h-3.5 w-3.5 opacity-70" />
+                <span className="text-xs font-medium">{baths}</span>
+              </div>
+            )}
+            {sqm > 0 && (
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Maximize className="h-3.5 w-3.5" />
+                <span className="text-xs font-medium">{sqm} m²</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

@@ -34,9 +34,9 @@ export default function OnboardingPage() {
   const slide = slides[step]
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground transition-all duration-700">
+    <div className="flex min-h-[100dvh] flex-col bg-background text-foreground transition-all duration-700">
       {/* Top Bar */}
-      <div className="flex justify-between items-center p-8">
+      <div className="flex justify-between items-center p-5">
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-primary" />
           <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">BlueOak Premium</span>
@@ -51,17 +51,17 @@ export default function OnboardingPage() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center px-10 text-center">
-        <div className="relative mb-16">
+        <div className="relative mb-8">
           <div className="absolute -inset-8 bg-primary/5 rounded-full blur-3xl" />
           <slide.Icon 
             strokeWidth={1.5} 
-            className="h-20 w-20 text-primary relative z-10 animate-fade-in" 
+            className="h-14 w-14 text-primary relative z-10 animate-fade-in" 
             key={`icon-${step}`}
           />
         </div>
 
         <div className="space-y-6 max-w-sm animate-fade-in" key={`content-${step}`}>
-          <h2 className="text-4xl font-black uppercase tracking-tighter leading-none text-primary">
+          <h2 className="text-3xl font-black uppercase tracking-tighter leading-none text-primary">
             {slide.title}
           </h2>
           <p className="text-sm font-medium leading-relaxed text-muted-foreground/80">
@@ -71,7 +71,7 @@ export default function OnboardingPage() {
       </div>
 
       {/* Bottom Controls */}
-      <div className="p-10 space-y-10">
+      <div className="p-6 space-y-6">
         <div className="flex justify-center gap-3">
           {slides.map((_, i) => (
             <div
@@ -88,7 +88,7 @@ export default function OnboardingPage() {
           {step < slides.length - 1 ? (
             <button
               onClick={() => setStep(step + 1)}
-              className="group flex items-center justify-between w-full h-16 px-8 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-widest text-xs hover:shadow-premium transition-all active:scale-[0.98]"
+              className="group flex items-center justify-between w-full h-13 px-6 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-widest text-xs hover:shadow-premium transition-all active:scale-[0.98]"
             >
               <span>Next Step</span>
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -96,7 +96,7 @@ export default function OnboardingPage() {
           ) : (
             <button
               onClick={finish}
-              className="flex items-center justify-center w-full h-16 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-widest text-xs hover:shadow-premium transition-all active:scale-[0.98]"
+              className="flex items-center justify-center w-full h-13 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-widest text-xs hover:shadow-premium transition-all active:scale-[0.98]"
             >
               Enter BlueOak
             </button>

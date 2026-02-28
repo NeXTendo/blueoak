@@ -5,6 +5,7 @@ export type Property = Database['public']['Tables']['properties']['Row'] & {
   available_from_date?: string | null
   expiry_date?: string | null
   language?: string
+  tags?: string[]
   price_negotiable?: boolean
   price_display_option?: 'show' | 'contact' | 'on_application'
   weekly_rate?: number | null
@@ -43,12 +44,15 @@ export type Property = Database['public']['Tables']['properties']['Row'] & {
   furnishing_status?: string | null
   kitchens_count?: number | null
   living_rooms_count?: number | null
-  staff_quarters?: boolean
-  borehole?: boolean
+  has_staff_quarters?: boolean
+  has_borehole?: boolean
   water_tank_capacity?: number | null
-  solar_panel_capacity?: number | null
+  has_solar?: boolean
+  solar_capacity?: number | null
+  has_generator?: boolean
   generator_capacity?: number | null
 }
+
 export type PropertyInsert = Database['public']['Tables']['properties']['Insert']
 export type PropertyUpdate = Database['public']['Tables']['properties']['Update']
 
@@ -56,19 +60,28 @@ export type ListingType = 'sale' | 'rent' | 'short_term' | 'lease' | 'auction'
 export type PropertyStatus = 'active' | 'pending' | 'sold' | 'rented' | 'archived' | 'rejected' | 'draft'
 
 export interface PropertyWithSeller extends Property {
-  seller: {
+  seller_id: string
+  seller_name?: string
+  seller_avatar?: string
+  seller_verified?: boolean
+  seller?: {
+    id: string
+    full_name: string
+    avatar_url: string | null
+    is_verified: boolean
+  }
+  profiles?: {
     id: string
     full_name: string
     username: string | null
     avatar_url: string | null
     is_verified: boolean
-    rating: number | null
-    response_time_hours: number | null
-    phone: string | null
-    whatsapp: string | null
+    user_type: string
+    bio: string | null
   }
-  media: Array<{ url: string; type: 'image' | 'video'; order: number }>
+  media?: Array<{ url: string; media_type?: 'image' | 'video'; order_index?: number }>
   is_saved?: boolean
+  total_count?: number
 }
 
 export interface PropertyFilters {

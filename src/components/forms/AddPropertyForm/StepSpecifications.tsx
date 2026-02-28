@@ -67,8 +67,8 @@ export default function StepSpecifications({ data, updateData }: StepSpecificati
               <Input 
                 type="number" 
                 className="h-12 rounded-xl border-2 bg-secondary/10"
-                value={data.toilets_separate || ''}
-                onChange={(e) => updateData({ toilets_separate: parseInt(e.target.value) })}
+                value={data.toilets || ''}
+                onChange={(e) => updateData({ toilets: parseInt(e.target.value) })}
               />
            </div>
         </div>
@@ -164,8 +164,8 @@ export default function StepSpecifications({ data, updateData }: StepSpecificati
            <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest">Property Condition</Label>
               <Select 
-                value={data.property_condition || 'excellent'} 
-                onValueChange={(v) => updateData({ property_condition: v })}
+                value={data.condition || 'excellent'} 
+                onValueChange={(v) => updateData({ condition: v })}
               >
                 <SelectTrigger className="h-12 rounded-xl border-2 bg-secondary/10">
                   <SelectValue />
@@ -182,8 +182,8 @@ export default function StepSpecifications({ data, updateData }: StepSpecificati
            <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest">Furnishing Status</Label>
               <Select 
-                value={data.furnishing_status || 'unfurnished'} 
-                onValueChange={(v) => updateData({ furnishing_status: v })}
+                value={data.furnishing || 'unfurnished'} 
+                onValueChange={(v) => updateData({ furnishing: v })}
               >
                 <SelectTrigger className="h-12 rounded-xl border-2 bg-secondary/10">
                   <SelectValue />

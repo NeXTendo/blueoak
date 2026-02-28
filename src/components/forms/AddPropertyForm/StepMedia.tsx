@@ -7,6 +7,7 @@ import { uploadFile, BUCKETS, deleteFile, getStoragePath } from '@/lib/storage'
 import { toast } from 'sonner'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/useAuth'
 
 interface StepMediaProps {
   data: any
@@ -27,7 +28,14 @@ export default function StepMedia({ data, updateData }: StepMediaProps) {
   const docInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
 
+  const { userId } = useAuth()
+
   const handleUpload = async (files: File[], bucket: string, type: 'image' | 'video' | 'document') => {
+    if (!userId) {
+      toast.error('You must be logged in to upload files')
+      return
+    }
+
     for (const file of files) {
       const id = Math.random().toString(36).substring(7)
       setUploads(prev => ({
@@ -36,7 +44,8 @@ export default function StepMedia({ data, updateData }: StepMediaProps) {
       }))
 
       try {
-        const result = await uploadFile(bucket, file, 'listings')
+        // RLS policy requires path to start with userId: auth.uid()::text = (storage.foldername(name))[1]
+        const result = await uploadFile(bucket, file, `${userId}/listings`)
         if (result.error) throw new Error(result.error)
 
         setUploads(prev => ({
@@ -46,8 +55,11 @@ export default function StepMedia({ data, updateData }: StepMediaProps) {
 
         if (type === 'image' || type === 'video') {
           const currentMedia = data.media || []
+          const isFirstImage = type === 'image' && currentMedia.filter((m: any) => m.type === 'image').length === 0
+          
           updateData({ 
-            media: [...currentMedia, { url: result.url, type, order: currentMedia.length }] 
+            media: [...currentMedia, { url: result.url, type, order: currentMedia.length, is_cover: isFirstImage }],
+            ...(isFirstImage ? { cover_image_url: result.url } : {})
           })
         } else {
           const currentDocs = data.documents || []

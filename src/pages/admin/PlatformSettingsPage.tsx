@@ -6,7 +6,8 @@ import {
   Save,
   RotateCcw,
   Cpu,
-  Lock
+  Lock,
+  Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,8 +17,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Container from '@/components/layout/Container'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { usePlatformSettings } from '@/hooks/useAdmin'
 
 export default function PlatformSettingsPage() {
+  const { settings, isLoading, updateSetting } = usePlatformSettings()
+
+  const getSetting = (key: string) => (settings as any[])?.find(s => s.key === key)?.value || ''
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-background pb-20">
       <header className="border-b border-border/50 py-12 bg-primary/5">
@@ -69,11 +83,19 @@ export default function PlatformSettingsPage() {
                        <div className="space-y-6">
                           <div className="space-y-2">
                              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Platform Name</Label>
-                             <Input defaultValue="BlueOak Real Estate" className="h-12 rounded-xl bg-secondary/20 border-border/50 font-bold" />
+                             <Input 
+                               defaultValue={getSetting('platform_name')} 
+                               onBlur={(e) => updateSetting.mutate({ key: 'platform_name', value: e.target.value })}
+                               className="h-12 rounded-xl bg-secondary/20 border-border/50 font-bold" 
+                             />
                           </div>
                           <div className="space-y-2">
                              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Support Alias</Label>
-                             <Input defaultValue="support@blueoak.com" className="h-12 rounded-xl bg-secondary/20 border-border/50 font-bold" />
+                             <Input 
+                               defaultValue={getSetting('platform_email')} 
+                               onBlur={(e) => updateSetting.mutate({ key: 'platform_email', value: e.target.value })}
+                               className="h-12 rounded-xl bg-secondary/20 border-border/50 font-bold" 
+                             />
                           </div>
                        </div>
                     </Card>
@@ -85,16 +107,20 @@ export default function PlatformSettingsPage() {
                        </div>
                        <div className="space-y-6">
                           {[
-                            { id: 'reg', label: 'Open Registration', desc: 'Allow new users to create accounts.', active: true },
-                            { id: 'list', label: 'Verified Listing Only', desc: 'Require manual approval for all new assets.', active: true },
-                            { id: 'mes', label: 'Inter-User Messaging', desc: 'Enable direct communication protocols.', active: true }
+                            { id: 'maintenance_mode', label: 'Maintenance Mode', desc: 'Lock platform for all non-admin users.' },
+                            { id: 'require_email_verification', label: 'Verify Emails', desc: 'Force verification for active participation.' },
+                            { id: 'allow_new_registrations', label: 'Open Registration', desc: 'Allow new users to create accounts.' }
                           ].map((flag) => (
                             <div key={flag.id} className="flex items-center justify-between gap-4">
                                <div className="space-y-0.5">
                                   <p className="text-sm font-black uppercase tracking-tight">{flag.label}</p>
                                   <p className="text-xs text-muted-foreground font-medium">{flag.desc}</p>
                                </div>
-                               <Switch defaultChecked={flag.active} className="data-[state=checked]:bg-primary" />
+                               <Switch 
+                                 checked={getSetting(flag.id) === 'true'} 
+                                 onCheckedChange={(checked) => updateSetting.mutate({ key: flag.id, value: checked.toString() })}
+                                 className="data-[state=checked]:bg-primary" 
+                               />
                             </div>
                           ))}
                        </div>
@@ -118,23 +144,24 @@ export default function PlatformSettingsPage() {
                        <div className="space-y-6">
                           <div className="flex items-center justify-between gap-4">
                              <div className="space-y-1">
-                                <Label className="text-sm font-black uppercase tracking-tight">Multi-Factor Authentication</Label>
+                                <Label className="text-sm font-black uppercase tracking-tight">Force MFA</Label>
                                 <p className="text-xs text-muted-foreground font-medium italic">Enforce MFA for all administrative and agent identities.</p>
                              </div>
-                             <Switch defaultChecked className="data-[state=checked]:bg-red-500" />
-                          </div>
-                          <div className="flex items-center justify-between gap-4">
-                             <div className="space-y-1">
-                                <Label className="text-sm font-black uppercase tracking-tight">Automatic IP Shield</Label>
-                                <p className="text-xs text-muted-foreground font-medium italic">Blacklist identities after 5 failed authentication attempts.</p>
-                             </div>
-                             <Switch defaultChecked className="data-[state=checked]:bg-red-500" />
+                             <Switch 
+                               checked={getSetting('force_mfa') === 'true'} 
+                               onCheckedChange={(checked) => updateSetting.mutate({ key: 'force_mfa', value: checked.toString() })}
+                               className="data-[state=checked]:bg-red-500" 
+                             />
                           </div>
                        </div>
                        <div className="space-y-6">
                            <div className="space-y-2">
                              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Session Timeout (Seconds)</Label>
-                             <Input defaultValue="3600" className="h-12 rounded-xl bg-background border-red-500/20 font-bold" />
+                             <Input 
+                               defaultValue={getSetting('session_timeout')} 
+                               onBlur={(e) => updateSetting.mutate({ key: 'session_timeout', value: e.target.value })}
+                               className="h-12 rounded-xl bg-background border-red-500/20 font-bold" 
+                             />
                           </div>
                           <Button variant="outline" className="w-full h-12 rounded-xl border-2 border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white font-black uppercase tracking-widest text-[10px]">
                              Initiate Global Logout

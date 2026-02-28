@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   ChevronLeft, 
@@ -46,6 +47,33 @@ export default function EditProfilePage() {
       })
     }
   }, [profile])
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !profile) return
+
+    setIsSaving(true)
+    try {
+      const fileExt = file.name.split('.').pop()
+      const filePath = `${profile.id}/avatar-${Math.random().toString(36).substring(7)}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath)
+
+      await updateProfile({ avatar_url: publicUrl })
+    } catch (error) {
+      console.error('Avatar upload failed:', error)
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -137,7 +165,13 @@ export default function EditProfilePage() {
                     <Camera size={32} />
                     <span className="text-[10px] font-black uppercase tracking-[0.2em]">Change Identity Visual</span>
                   </div>
-                  <input type="file" id="avatar-upload" className="hidden" accept="image/*" />
+                  <input 
+                    type="file" 
+                    id="avatar-upload" 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handleAvatarChange}
+                  />
                 </label>
               </div>
 

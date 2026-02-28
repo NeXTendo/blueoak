@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { usePropertyStore } from '@/stores/propertyStore'
+import { useAuthStore } from '@/stores/authStore'
 import type { PropertyWithSeller } from '@/types/property'
 import { PAGE_SIZE } from '@/lib/constants'
 
@@ -28,6 +29,11 @@ export function useProperties() {
         p_sort_by:      sortBy,
         p_page:         pageParam,
         p_page_size:    PAGE_SIZE,
+        p_min_solar_capacity: filters.min_solar_capacity || undefined,
+        p_min_generator_capacity: filters.min_generator_capacity || undefined,
+        p_min_water_tank_capacity: filters.min_water_tank_capacity || undefined,
+        p_has_borehole: filters.has_borehole ?? undefined,
+        p_has_staff_quarters: filters.has_staff_quarters ?? undefined,
       } as any)
       if (error) throw error
       return data as PropertyWithSeller[]
@@ -43,9 +49,14 @@ export function useProperty(slug: string) {
   return useQuery({
     queryKey: ['property', slug],
     queryFn: async () => {
+      console.log(`[Diagnostic] Fetching detail for slug: ${slug}`);
       const { data, error } = await supabase.rpc('get_property_detail', { p_slug: slug } as any)
-      if (error) throw error
-      return data
+      console.log(`[Diagnostic] RPC Response for ${slug}:`, { data, error });
+      if (error) {
+        console.error(`[Diagnostic] RPC Error:`, error)
+        throw error
+      }
+      return data as PropertyWithSeller
     },
     enabled: !!slug,
     staleTime: 1000 * 60 * 10,
@@ -67,5 +78,40 @@ export function useFeaturedProperties() {
       return data as PropertyWithSeller[]
     },
     staleTime: 1000 * 60 * 10,
+  })
+}
+
+export function useSavedProperties() {
+  return useQuery({
+    queryKey: ['properties', 'saved'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_user_saved_properties')
+      if (error) throw error
+      return data as PropertyWithSeller[]
+    },
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+export function useUserProperties() {
+  const session = useAuthStore(s => s.session)
+  const userId = session?.user?.id
+
+  return useQuery({
+    queryKey: ['properties', 'user', userId],
+    queryFn: async () => {
+      if (!userId) return []
+
+      const { data, error } = await supabase
+        .from('properties')
+        .select(`*, profiles:seller_id(id, full_name, avatar_url, is_verified)`)
+        .eq('seller_id', userId)
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      return data as PropertyWithSeller[]
+    },
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 5,
   })
 }

@@ -58,17 +58,26 @@ export default function AddPropertyPage() {
     property_type: 'house',
     currency: 'USD',
     amenities: [],
-    status: 'draft',
-    price_display_option: 'show',
-    display_address_option: 'full',
-    language: 'en',
+    tags: [],
+    status: 'pending',
+    negotiable: false,
+    pet_friendly: false,
     borehole: false,
     solar_power: false,
     generator: false,
+    staff_quarters: false,
+    address_private: false,
   })
 
   const updateData = (newData: any) => {
-    setFormData((prev: any) => ({ ...prev, ...newData }))
+    setFormData((prev: any) => {
+      const next = { ...prev, ...newData }
+      // Auto-calculate price per sqft if possible
+      if ((newData.asking_price || newData.floor_area) && next.asking_price && next.floor_area) {
+        next.price_per_sqft = next.asking_price / next.floor_area
+      }
+      return next
+    })
   }
 
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, STEPS.length))
@@ -82,23 +91,24 @@ export default function AddPropertyPage() {
 
     try {
       setIsSubmitting(true)
-      const { data, error } = await supabase
-        .from('properties')
-        .insert([{
-          ...formData,
-          seller_id: userId,
-          status: 'pending',
+      
+      const { media, documents, ...propertyData } = formData
+      
+      const { error } = await supabase.rpc('create_property_listing', {
+        p_property_data: {
+          ...propertyData,
           slug: (formData.title || 'untitled').toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') + '-' + Math.random().toString(36).substring(7),
           reference: 'BOA-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
-        }] as any)
-        .select()
-        .single()
+        },
+        p_media: media || [],
+        p_documents: documents || []
+      } as any)
 
       if (error) throw error
       
-      const property = data as any
       toast.success('Property listing initiated for verification!')
-      navigate(`${ROUTES.PROPERTY_DETAIL}/${property.slug}`)
+      // Redirect to the property detail or my listings
+      navigate(ROUTES.MESSAGES) // Or wherever appropriate, maybe /my-listings if it exists
     } catch (error: any) {
       console.error('Error submitting property:', error)
       toast.error(error.message || 'Failed to submit property. Please verify your data.')
@@ -121,8 +131,8 @@ export default function AddPropertyPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-32">
-      <header className="border-b border-secondary/50 py-16 bg-secondary/5 relative overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-background pb-20 md:pb-32">
+      <header className="border-b border-secondary/50 py-10 md:py-16 bg-secondary/5 relative overflow-hidden">
         <div className="absolute inset-0 bg-grid-white/5 opacity-20 pointer-events-none" />
         <Container>
           <div className="max-w-4xl mx-auto space-y-12 relative z-10">
@@ -131,15 +141,15 @@ export default function AddPropertyPage() {
                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
                  <span className="text-[10px] font-black uppercase tracking-widest text-primary">Protocol Listing Agent</span>
               </div>
-              <h1 className="text-5xl font-black uppercase tracking-tighter leading-none">Initialize Asset Index</h1>
-              <p className="text-muted-foreground font-medium italic text-lg">Scale your portfolio across the global BlueOak repository.</p>
+              <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-none text-balance">Initialize Asset Index</h1>
+              <p className="text-muted-foreground font-medium italic text-base md:text-lg">Scale your portfolio across the global BlueOak repository.</p>
             </div>
 
             {/* Progress Indicator */}
             <div className="flex justify-between relative pt-8 px-4">
-              <div className="absolute top-[3.5rem] left-0 w-full h-0.5 bg-secondary/30 -translate-y-1/2 z-0" />
+              <div className="absolute top-[3.5rem] left-0 w-full h-0.5 bg-secondary/30 -translate-y-1/2 z-0 hidden sm:block" />
               <div 
-                className="absolute top-[3.5rem] left-0 h-0.5 bg-primary -translate-y-1/2 z-0 transition-all duration-700 ease-out" 
+                className="absolute top-[3.5rem] left-0 h-0.5 bg-primary -translate-y-1/2 z-0 transition-all duration-700 ease-out hidden sm:block" 
                 style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }}
               />
               
@@ -149,17 +159,17 @@ export default function AddPropertyPage() {
                 const isCompleted = currentStep > step.id
                 
                 return (
-                  <div key={step.id} className="relative z-10 flex flex-col items-center gap-4">
+                  <div key={step.id} className="relative z-10 flex flex-col items-center gap-2 md:gap-4">
                     <div className={cn(
-                      "h-14 w-14 rounded-2xl flex items-center justify-center border-4 transition-all duration-500",
-                      isActive ? "bg-primary border-primary text-primary-foreground scale-110 shadow-[0_0_30px_rgba(var(--primary),0.3)]" : 
+                      "h-10 w-10 md:h-14 md:w-14 rounded-xl md:rounded-2xl flex items-center justify-center border-2 md:border-4 transition-all duration-500",
+                      isActive ? "bg-primary border-primary text-primary-foreground scale-110 shadow-[0_0_20px_rgba(var(--primary),0.3)]" : 
                       isCompleted ? "bg-primary border-primary text-primary-foreground" : 
                       "bg-background border-secondary text-muted-foreground/30"
                     )}>
-                      {isCompleted ? <Check size={24} strokeWidth={3} /> : <Icon size={24} />}
+                      {isCompleted ? <Check size={18} className="md:size-6" strokeWidth={3} /> : <Icon size={18} className="md:size-6" />}
                     </div>
                     <span className={cn(
-                      "text-[9px] font-black uppercase tracking-[0.2em] transition-colors",
+                      "text-[7px] md:text-[9px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] transition-colors hidden sm:block",
                       isActive ? "text-primary" : "text-muted-foreground/40"
                     )}>{step.title}</span>
                   </div>
@@ -170,9 +180,9 @@ export default function AddPropertyPage() {
         </Container>
       </header>
 
-      <main className="-mt-12 relative z-20">
+      <main className="-mt-8 md:-mt-12 relative z-20">
         <Container>
-          <div className="max-w-4xl mx-auto bg-background border-2 border-secondary/50 rounded-[4rem] p-16 shadow-premium relative backdrop-blur-xl">
+          <div className="max-w-4xl mx-auto bg-background border border-secondary/50 md:border-2 rounded-[2rem] md:rounded-[4rem] p-6 md:p-16 shadow-premium relative backdrop-blur-xl">
              <AnimatePresence mode="wait">
                 <motion.div 
                   key={currentStep}
@@ -185,12 +195,12 @@ export default function AddPropertyPage() {
                 </motion.div>
              </AnimatePresence>
 
-             <div className="flex justify-between pt-16 items-center border-t border-secondary/30 mt-16">
+              <div className="flex flex-col sm:flex-row justify-between pt-8 md:pt-16 items-center gap-6 border-t border-secondary/30 mt-8 md:mt-16">
                 <Button 
                   disabled={currentStep === 1 || isSubmitting}
                   variant="ghost" 
                   onClick={prevStep} 
-                  className="h-16 px-10 rounded-2xl font-black uppercase tracking-[0.2em] text-xs gap-4 hover:bg-secondary/20 transition-all disabled:opacity-0"
+                  className="h-12 md:h-16 px-6 md:px-10 rounded-xl md:rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] md:text-xs gap-4 hover:bg-secondary/20 transition-all disabled:opacity-0 w-full sm:w-auto"
                 >
                    <ChevronLeft size={18} />
                    Revert Step
@@ -199,7 +209,7 @@ export default function AddPropertyPage() {
                 {currentStep < STEPS.length ? (
                    <Button 
                      onClick={nextStep} 
-                     className="h-16 px-12 rounded-2xl font-black uppercase tracking-[0.2em] text-xs gap-4 shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                     className="h-12 md:h-16 px-8 md:px-12 rounded-xl md:rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] md:text-xs gap-4 shadow-xl md:shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all w-full sm:w-auto"
                    >
                       Proceed: {STEPS[currentStep].title}
                       <ChevronRight size={18} />
@@ -208,7 +218,7 @@ export default function AddPropertyPage() {
                    <Button 
                      disabled={isSubmitting}
                      onClick={handleFinalSubmit} 
-                     className="h-20 px-16 rounded-[2rem] font-black uppercase tracking-[0.2em] text-sm shadow-2xl shadow-primary/30 flex-1 ml-12 bg-primary hover:bg-primary/90 transition-all hover:scale-[1.02]"
+                     className="h-14 md:h-20 px-10 md:px-16 rounded-2xl md:rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs md:text-sm shadow-xl md:shadow-2xl shadow-primary/30 flex-1 sm:ml-12 bg-primary hover:bg-primary/90 transition-all hover:scale-[1.02] w-full"
                    >
                       {isSubmitting ? (
                         <div className="flex items-center gap-3">

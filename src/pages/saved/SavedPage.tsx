@@ -3,52 +3,65 @@ import {
   Trash2, 
   ArrowRight, 
   Bell, 
-  Clock 
+  Clock,
+  Loader2 
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { MOCK_PROPERTIES } from '@/lib/mock-data'
 import PropertyCard from '@/components/property/PropertyCard'
 import Container from '@/components/layout/Container'
+import { useSavedProperties } from '@/hooks/useProperties'
 
 export default function SavedPage() {
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState('properties')
 
-  const savedProperties = MOCK_PROPERTIES.slice(0, 3)
+  const { data: savedProperties = [], isLoading } = useSavedProperties()
   const savedSearches = [
     { id: '1', query: '3 Bed House in Lusaka', filters: 'Min $200k, Pool', date: '2 days ago' },
     { id: '2', query: 'Apartments in Lagos CBD', filters: 'Min $50k', date: '5 days ago' }
   ]
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <header className="border-b border-border/50 py-8">
-        <Container className="space-y-2">
-          <h1 className="text-4xl font-black tracking-tight">{t('saved.title', 'My Collection')}</h1>
-          <p className="text-muted-foreground font-medium">{t('saved.subtitle', 'Keep track of the properties and searches you love.')}</p>
+      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b border-border/50 pt-[env(safe-area-inset-top,0px)] py-5">
+        <Container className="space-y-1">
+          <h1 className="text-3xl font-black tracking-tight">{t('saved.title', 'My Collection')}</h1>
+          <p className="text-sm text-muted-foreground font-medium">{t('saved.subtitle', 'Keep track of the properties and searches you love.')}</p>
         </Container>
       </header>
 
-      <main className="flex-1 py-6">
+      <main className="flex-1 py-4">
         <Container>
-          <Tabs defaultValue="properties" value={activeTab} onValueChange={setActiveTab} className="w-full space-y-8">
-          <TabsList className="h-12 bg-secondary/30 p-1 rounded-xl">
-            <TabsTrigger value="properties" className="rounded-lg px-8 font-bold data-[state=active]:bg-background data-[state=active]:shadow-sm">
+          <Tabs defaultValue="properties" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="sticky top-[calc(env(safe-area-inset-top,0px)+72px)] z-10 bg-background pb-4 pt-2">
+          <TabsList className="h-11 bg-secondary/30 p-1 rounded-xl w-full">
+            <TabsTrigger value="properties" className="flex-1 rounded-lg font-bold data-[state=active]:bg-background data-[state=active]:shadow-sm">
               Properties ({savedProperties.length})
             </TabsTrigger>
-            <TabsTrigger value="searches" className="rounded-lg px-8 font-bold data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <TabsTrigger value="searches" className="flex-1 rounded-lg font-bold data-[state=active]:bg-background data-[state=active]:shadow-sm">
               Saved Searches ({savedSearches.length})
             </TabsTrigger>
           </TabsList>
+          </div>
 
-          <TabsContent value="properties" className="m-0 space-y-8">
+          <div className="space-y-6">
+
+          <TabsContent value="properties" className="m-0 space-y-4">
             {savedProperties.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 gap-4">
                 {savedProperties.map((property) => (
-                  <PropertyCard key={property.id} property={property as any} />
+                  <PropertyCard key={property.id} property={property} />
                 ))}
               </div>
             ) : (
@@ -109,6 +122,7 @@ export default function SavedPage() {
               />
             )}
           </TabsContent>
+          </div>
           </Tabs>
         </Container>
       </main>

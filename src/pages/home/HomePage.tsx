@@ -1,97 +1,196 @@
-import { MOCK_PROPERTIES } from '@/lib/mock-data'
+import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
+import { supabase } from '@/lib/supabase'
 import PropertyCarousel from '@/components/property/PropertyCarousel'
+import FeaturedCategories from '@/components/home/FeaturedCategories'
 import Container from '@/components/layout/Container'
+import { Loader2, ArrowRight } from 'lucide-react'
+import { ROUTES } from '@/lib/constants'
+import { motion, AnimatePresence } from 'framer-motion'
+
+const DEFAULT_HERO = 'https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=2000&auto=format&fit=crop'
 
 export default function HomePage() {
-  // Mock filtering logic for the 7 sections
+  const { data: homeData, isLoading } = useQuery({
+    queryKey: ['home-data'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_homepage_data')
+      if (error) throw error
+      return data as any
+    },
+    staleTime: 1000 * 60 * 5,
+  })
+
+  // Auto-scrolling hero logic
+  const heroProperties = homeData?.featured && homeData.featured.length > 0 
+    ? homeData.featured 
+    : [{ cover_image_url: DEFAULT_HERO }]
+    
+  const [currentHeroIndex, setCurrentHeroIndex] = useState(0)
+
+  useEffect(() => {
+    if (heroProperties.length <= 1) return
+    const timer = setInterval(() => {
+      setCurrentHeroIndex((prev) => (prev + 1) % heroProperties.length)
+    }, 6000) // Change image every 6 seconds
+    return () => clearInterval(timer)
+  }, [heroProperties.length])
+
   const sections = [
-    {
-      title: "Premier Lands in Lusaka",
-      properties: MOCK_PROPERTIES.filter(p => p.type.toLowerCase().includes('land') && p.location.toLowerCase().includes('lusaka')),
-      linkTo: "/search?type=Land&location=Lusaka"
-    },
-    {
-      title: "Homes Available in Woodlands",
-      properties: MOCK_PROPERTIES.filter(p => p.location.toLowerCase().includes('woodlands')),
-      linkTo: "/search?location=Woodlands"
-    },
-    {
-      title: "New Listings this Week",
-      properties: MOCK_PROPERTIES.slice(0, 8),
-      linkTo: "/search?sort=newest"
-    },
-    {
-      title: "Top Rated Offices for Business",
-      properties: MOCK_PROPERTIES.filter(p => p.type.toLowerCase().includes('office')),
-      linkTo: "/search?type=Office"
-    },
-    {
-      title: "Luxury Villas in Cape Town",
-      properties: MOCK_PROPERTIES.filter(p => p.type.toLowerCase().includes('villa') && p.location.toLowerCase().includes('cape town')),
-      linkTo: "/search?type=Villa&location=Cape Town"
-    },
-    {
-      title: "Available since last month in Lusaka",
-      properties: MOCK_PROPERTIES.filter(p => p.location.toLowerCase().includes('lusaka')).slice(2, 10),
-      linkTo: "/search?location=Lusaka"
-    },
-    {
-      title: "Modern Apartments in Nairobi",
-      properties: MOCK_PROPERTIES.filter(p => p.type.toLowerCase().includes('apartment') && p.location.toLowerCase().includes('nairobi')),
-      linkTo: "/search?type=Apartment&location=Nairobi"
-    }
+    { title: 'New to Market', properties: homeData?.new_listings || [], linkTo: '/search?sort=newest' },
+    { title: 'Premier Lands · Lusaka', properties: homeData?.lands_lusaka || [], linkTo: '/search?type=Land&location=Lusaka' },
+    { title: 'Featured Collections', properties: homeData?.featured || [], linkTo: '/search?featured=true' },
+    { title: 'Modern Apartments · Nairobi', properties: homeData?.apartments_nairobi || [], linkTo: '/search?type=Apartment&location=Nairobi' },
   ]
 
   return (
-    <div className="flex flex-col min-h-screen pt-[calc(5.5rem+env(safe-area-inset-top))] md:pt-44 overflow-x-hidden">
-      {/* Discovery Sections */}
-      <div className="py-8 md:py-12">
-        <Container className="flex flex-col gap-10 md:gap-12">
-          {sections.map((section, idx) => (
-            <PropertyCarousel 
-              key={idx}
-              title={section.title}
-              properties={section.properties}
-              linkTo={section.linkTo}
-            />
-          ))}
+    <div className="flex flex-col min-h-screen">
+      {/* ── Cinematic Hero ───────────────────────────────────────── */}
+      <section className="relative w-full h-[85vh] md:h-[80vh] flex items-end overflow-hidden rounded-b-[2rem] md:rounded-b-[4rem] shadow-2xl">
+        {/* Animated Hero Background */}
+        <AnimatePresence initial={false}>
+          <motion.img
+            key={currentHeroIndex}
+            src={heroProperties[currentHeroIndex]?.cover_image_url || DEFAULT_HERO}
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
+            className="absolute inset-0 w-full h-full object-cover"
+            alt="Luxury property showcase"
+          />
+        </AnimatePresence>
 
-          {/* Dynamic Dark CTA Banner */}
-          <section className="mt-8 py-16 md:py-24 bg-primary text-primary-foreground relative overflow-hidden rounded-[2rem] shadow-premium">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-bl-[20rem] -translate-y-24 translate-x-24 blur-3xl opacity-50" />
-            <div className="max-w-4xl space-y-8 px-6 relative z-10 text-center mx-auto">
-              <div className="space-y-4">
-                <h2 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight">
-                  List your property <br />
-                  <span className="opacity-40 font-medium">Reach high-intent investors.</span>
-                </h2>
-                <p className="text-base md:text-lg text-primary-foreground/70 max-w-2xl mx-auto font-medium leading-relaxed">
-                  Experience the pinnacle of real estate marketing with direct access to a global network of qualified buyers.
-                </p>
-              </div>
-              <div className="flex flex-wrap justify-center gap-4 pt-4">
-                <button className="h-14 px-10 bg-white text-black rounded-xl font-bold text-[15px] hover:shadow-2xl transition-all active:scale-95 shadow-xl">
-                  Start Listing
-                </button>
-                <button className="h-14 px-10 border border-white/20 text-white rounded-xl font-semibold text-[15px] hover:bg-white/5 transition-all">
-                  Learn more
-                </button>
-              </div>
-            </div>
-          </section>
+        {/* Dark scrim: bottom half heavy, top transparent */}
+        <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/40 to-transparent pointer-events-none" />
 
-          {/* Sub-hero Section at Bottom (Airbnb style footer distinction) */}
-          <section className="mt-12 py-12 md:py-20 border-t border-secondary/20 relative overflow-hidden">
-            {/* Subtle Brand Accents */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-32 translate-x-32" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl translate-y-32 -translate-x-32" />
-            
-            <div className="relative z-10 text-center space-y-4">
-               <h2 className="text-4xl md:text-5xl font-medium tracking-tight">Discover your next <span className="text-primary">BlueOak</span> asset.</h2>
-               <p className="text-muted-foreground max-w-2xl mx-auto font-medium">Access a curated selection of premier real estate, lands, and commercial properties across Africa's growing hubs.</p>
+        {/* Hero content */}
+        <Container className="relative z-10 pb-16 md:pb-20">
+          <div className="max-w-3xl">
+            {/* Eyebrow */}
+            <div className="flex items-center gap-3 mb-6">
+              <span className="w-8 h-px bg-[hsl(var(--gold))]" />
+              <span className="text-[hsl(var(--gold))] text-[10px] font-semibold uppercase tracking-[0.25em]">
+                Global Luxury Real Estate
+              </span>
             </div>
-          </section>
+
+            {/* Headline */}
+            <h1 className="font-serif text-white text-4xl md:text-5xl lg:text-7xl font-light leading-[1.05] tracking-tight mb-6 drop-shadow-lg">
+              Find extraordinary
+              <br />
+              <span className="italic text-white/90">properties</span>
+              <br />
+              across borders.
+            </h1>
+
+            {/* Sub */}
+            <p className="text-white/60 text-base md:text-lg font-light mb-10 max-w-lg leading-relaxed">
+              Exclusive residential, commercial, and land investments — curated for discerning buyers.
+            </p>
+
+            {/* CTAs */}
+            <div className="flex flex-wrap items-center gap-4">
+              <Link
+                to={ROUTES.SEARCH}
+                className="je-btn-gold text-sm px-8 py-4 shadow-gold-glow"
+              >
+                Explore Properties
+                <ArrowRight size={15} />
+              </Link>
+              <Link
+                to={ROUTES.ADD_PROPERTY}
+                className="flex items-center gap-2 px-8 py-4 border border-white/30 text-white/80 rounded-sm text-sm font-medium hover:bg-white/10 transition-colors"
+              >
+                List with Us
+              </Link>
+            </div>
+          </div>
         </Container>
+
+        {/* Bottom stats bar */}
+        <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 hidden md:block">
+          <Container>
+            <div className="flex items-center divide-x divide-white/10 py-5">
+              {[
+                { value: '2,400+', label: 'Active Listings' },
+                { value: '18', label: 'Countries' },
+                { value: '$4.2B+', label: 'Assets Indexed' },
+                { value: '12,000+', label: 'Verified Buyers' },
+              ].map(({ value, label }) => (
+                <div key={label} className="flex-1 flex flex-col items-center px-4">
+                  <span className="font-serif text-white text-xl font-medium">{value}</span>
+                  <span className="text-white/40 text-[10px] uppercase tracking-[0.15em] mt-0.5 font-medium">{label}</span>
+                </div>
+              ))}
+            </div>
+          </Container>
+        </div>
+      </section>
+
+      {/* ── Discovery Sections ───────────────────────────────────── */}
+      <div className="bg-background">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-32">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="py-14 md:py-20">
+            <Container className="flex flex-col gap-16 md:gap-24">
+              
+              {/* Inject the novel Categories Section */}
+              <FeaturedCategories />
+
+              {sections.map((section, idx) =>
+                section.properties.length > 0 ? (
+                  <PropertyCarousel
+                    key={idx}
+                    title={section.title}
+                    properties={section.properties}
+                    linkTo={section.linkTo}
+                  />
+                ) : null
+              )}
+
+              {/* CTA Banner */}
+              <section className="relative overflow-hidden rounded-sm bg-charcoal text-white py-16 md:py-24 px-8 md:px-16">
+                {/* Gold accent line */}
+                <div className="absolute top-0 left-0 right-0 h-px bg-[hsl(var(--gold)/0.4)]" />
+
+                <div className="max-w-2xl relative z-10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <span className="w-8 h-px bg-[hsl(var(--gold))]" />
+                    <span className="text-[hsl(var(--gold))] text-[10px] font-semibold uppercase tracking-[0.25em]">List Your Asset</span>
+                  </div>
+                  <h2 className="font-serif text-3xl md:text-5xl font-light leading-tight mb-5">
+                    Reach qualified buyers
+                    <br />
+                    <span className="italic text-white/50">across the globe.</span>
+                  </h2>
+                  <p className="text-white/50 text-base mb-10 leading-relaxed max-w-lg">
+                    Access our global network of verified buyers and investors. Professional marketing, zero hassle.
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    <Link to={ROUTES.ADD_PROPERTY} className="je-btn-gold px-8 py-4 text-sm shadow-gold-glow">
+                      Start Listing
+                      <ArrowRight size={15} />
+                    </Link>
+                    <Link to={ROUTES.SEARCH} className="flex items-center gap-2 px-8 py-4 border border-white/20 text-white/60 rounded-sm text-sm font-medium hover:text-white hover:border-white/40 transition-colors">
+                      Browse Listings
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Decorative gold element */}
+                <div className="absolute right-0 top-0 bottom-0 w-1/3 hidden lg:flex items-center justify-center opacity-10">
+                  <div className="w-48 h-48 rounded-full border border-[hsl(var(--gold))]" />
+                  <div className="absolute w-32 h-32 rounded-full border border-[hsl(var(--gold))]" />
+                </div>
+              </section>
+            </Container>
+          </div>
+        )}
       </div>
     </div>
   )

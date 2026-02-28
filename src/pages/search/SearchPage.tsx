@@ -1,10 +1,9 @@
-import { useState } from 'react'
 import { 
   LayoutGrid, 
   Map as MapIcon, 
-  ChevronDown, 
   SlidersHorizontal,
-  Search as SearchIcon
+  Search as SearchIcon,
+  Loader2
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
@@ -31,7 +30,8 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { PROPERTY_TYPES, LISTING_TYPES } from '@/lib/constants'
-import { MOCK_PROPERTIES } from '@/lib/mock-data'
+import { useProperties } from '@/hooks/useProperties'
+import { usePropertyStore } from '@/stores/propertyStore'
 import PropertyCard from '@/components/property/PropertyCard'
 import Container from '@/components/layout/Container'
 import { cn } from '@/lib/utils'
@@ -40,53 +40,47 @@ import EmptyState from '@/components/common/EmptyState'
 
 export default function SearchPage() {
   const { t } = useTranslation()
-  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [listingType, setListingType] = useState('all')
-  const [propertyType, setPropertyType] = useState('all')
-  const [hasBorehole, setHasBorehole] = useState(false)
-  const [hasStaffQuarters, setHasStaffQuarters] = useState(false)
-  const [minSolar, setMinSolar] = useState('')
-  const [minGenerator, setMinGenerator] = useState('')
-  const [minWaterTank, setMinWaterTank] = useState('')
+  const { 
+    filters, setFilters, 
+    searchQuery, setSearchQuery, 
+    sortBy, setSortBy,
+    viewMode, setViewMode,
+    resetFilters
+  } = usePropertyStore()
 
-  const filteredProperties = MOCK_PROPERTIES.filter(p => {
-    const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          p.location.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesListing = listingType === 'all' || p.listingType === listingType
-    const matchesProperty = propertyType === 'all' || p.type === propertyType
+  const { 
+    data, 
+    fetchNextPage, 
+    hasNextPage, 
+    isFetchingNextPage, 
+    isLoading 
+  } = useProperties()
 
-    // Technical spec matches (mock data might not have these yet, so we'll be lenient)
-    const matchesBorehole = !hasBorehole || (p as any).has_borehole === true
-    const matchesStaffQuarters = !hasStaffQuarters || (p as any).has_staff_quarters === true
-    const matchesSolar = !minSolar || ((p as any).solar_capacity || 0) >= parseFloat(minSolar)
-    const matchesGenerator = !minGenerator || ((p as any).generator_capacity || 0) >= parseFloat(minGenerator)
-    const matchesWaterTank = !minWaterTank || ((p as any).water_tank_capacity || 0) >= parseFloat(minWaterTank)
-
-    return matchesSearch && matchesListing && matchesProperty && matchesBorehole && matchesStaffQuarters && matchesSolar && matchesGenerator && matchesWaterTank
-  })
+  // Flatten the pages of properties
+  const properties = data?.pages.flat() || []
+  const totalCount = properties[0]?.total_count || 0
 
   return (
     <div className="flex flex-col h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-screen bg-background">
       {/* Search & Filter Header */}
-      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-xl border-b border-border/40 py-4">
+      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-xl border-b border-border/40 pt-[env(safe-area-inset-top,0px)] py-4">
         <Container className="space-y-4">
           <div className="flex items-center gap-4">
             <div className="relative flex-1 group">
-              <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-foreground transition-colors" size={18} />
+              <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-[hsl(var(--gold))] transition-colors" size={18} />
               <Input 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('search.placeholder', 'Search cities, suburbs or points of interest...')}
-                className="pl-12 h-12 bg-secondary/30 border-none rounded-2xl focus-visible:ring-2 focus-visible:ring-primary/10 transition-all font-medium text-[15px]"
+                className="pl-12 h-12 bg-transparent border-border/50 rounded-sm focus-visible:border-[hsl(var(--gold))] focus-visible:ring-1 focus-visible:ring-[hsl(var(--gold))] transition-all font-medium text-[15px] shadow-sm"
               />
             </div>
             
-            <div className="flex items-center bg-secondary/30 rounded-2xl p-1 shrink-0">
+            <div className="flex items-center bg-secondary/10 border border-border/50 rounded-sm p-1 shrink-0">
               <Button 
                 variant={viewMode === 'grid' ? 'secondary' : 'ghost'} 
                 size="icon" 
-                className={cn("h-10 w-10 rounded-xl transition-all", viewMode === 'grid' && "bg-background shadow-sm hover:bg-background")}
+                className={cn("h-10 w-10 rounded-sm transition-all text-muted-foreground hover:text-foreground", viewMode === 'grid' && "bg-background shadow-sm text-foreground")}
                 onClick={() => setViewMode('grid')}
               >
                 <LayoutGrid size={18} />
@@ -94,7 +88,7 @@ export default function SearchPage() {
               <Button 
                 variant={viewMode === 'map' ? 'secondary' : 'ghost'} 
                 size="icon" 
-                className={cn("h-10 w-10 rounded-xl transition-all", viewMode === 'map' && "bg-background shadow-sm hover:bg-background")}
+                className={cn("h-10 w-10 rounded-sm transition-all text-muted-foreground hover:text-foreground", viewMode === 'map' && "bg-background shadow-sm text-foreground")}
                 onClick={() => setViewMode('map')}
               >
                 <MapIcon size={18} />
@@ -104,8 +98,11 @@ export default function SearchPage() {
 
           {/* Quick Filters */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
-            <Select value={listingType} onValueChange={setListingType}>
-              <SelectTrigger className="w-fit h-10 gap-2 rounded-xl border-border/60 bg-background px-4 font-semibold text-[13px] hover:bg-secondary/20 transition-colors">
+            <Select 
+              value={filters.listing_type || 'all'} 
+              onValueChange={(val) => setFilters({ listing_type: val === 'all' ? undefined : val as any })}
+            >
+              <SelectTrigger className="w-fit h-10 gap-2 rounded-sm border-border/50 bg-transparent px-4 font-medium text-[13px] hover:border-[hsl(var(--gold))] transition-colors">
                 <SelectValue placeholder="Listing Type" />
               </SelectTrigger>
               <SelectContent>
@@ -116,8 +113,11 @@ export default function SearchPage() {
               </SelectContent>
             </Select>
 
-            <Select value={propertyType} onValueChange={setPropertyType}>
-              <SelectTrigger className="w-fit h-10 gap-2 rounded-xl border-border/60 bg-background px-4 font-semibold text-[13px] hover:bg-secondary/20 transition-colors">
+            <Select 
+              value={filters.property_type || 'all'} 
+              onValueChange={(val) => setFilters({ property_type: val === 'all' ? undefined : val })}
+            >
+              <SelectTrigger className="w-fit h-10 gap-2 rounded-sm border-border/50 bg-transparent px-4 font-medium text-[13px] hover:border-[hsl(var(--gold))] transition-colors">
                 <SelectValue placeholder="Property Type" />
               </SelectTrigger>
               <SelectContent>
@@ -128,23 +128,18 @@ export default function SearchPage() {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" className="h-10 px-4 rounded-xl border-border/60 bg-background font-semibold text-[13px] gap-2 hover:bg-secondary/20">
-              Price
-              <ChevronDown size={14} className="opacity-50" />
-            </Button>
-
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" className="h-10 px-4 rounded-xl border-primary/20 bg-primary/5 text-primary font-semibold text-[13px] gap-2 hover:bg-primary/10 transition-all">
+                <Button variant="outline" className="h-10 px-4 rounded-sm border-border/50 bg-transparent font-medium text-[13px] gap-2 hover:text-[hsl(var(--gold))] hover:border-[hsl(var(--gold))] transition-all">
                   <SlidersHorizontal size={14} />
-                  More filters
+                  Filters
                 </Button>
               </SheetTrigger>
 
               <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
                 <SheetHeader className="p-6 border-b border-border/50">
-                  <SheetTitle className="text-2xl font-black tracking-tight">Advanced Filters</SheetTitle>
-                  <SheetDescription>Refine your property search results.</SheetDescription>
+                  <SheetTitle className="font-serif text-3xl font-light">Refine Search</SheetTitle>
+                  <SheetDescription>Adjust filters to find exactly what you're looking for.</SheetDescription>
                 </SheetHeader>
                 
                 <ScrollArea className="flex-1 px-6">
@@ -155,28 +150,43 @@ export default function SearchPage() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="min-price" className="text-xs font-bold text-muted-foreground uppercase">Min Price</Label>
-                          <Input id="min-price" placeholder="0" />
+                          <Input 
+                            id="min-price" 
+                            type="number"
+                            placeholder="0" 
+                            value={filters.min_price || ''}
+                            onChange={(e) => setFilters({ min_price: e.target.value ? parseInt(e.target.value) : undefined })}
+                          />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="max-price" className="text-xs font-bold text-muted-foreground uppercase">Max Price</Label>
-                          <Input id="max-price" placeholder="Any" />
+                          <Input 
+                            id="max-price" 
+                            type="number"
+                            placeholder="Any" 
+                            value={filters.max_price || ''}
+                            onChange={(e) => setFilters({ max_price: e.target.value ? parseInt(e.target.value) : undefined })}
+                          />
                         </div>
                       </div>
                     </div>
 
-                    {/* Beds & Baths Section */}
+                    {/* Beds Section */}
                     <div className="space-y-4">
-                      <Label className="text-base font-bold">Bedrooms</Label>
+                      <Label className="text-base font-bold">Minimum Bedrooms</Label>
                       <div className="flex flex-wrap gap-2">
-                        {['Any', '1+', '2+', '3+', '4+', '5+'].map((n) => (
-                          <Button key={n} variant="outline" className="h-10 px-4 rounded-xl border-2 font-bold hover:border-primary hover:text-primary transition-all">
-                            {n}
+                        {[0, 1, 2, 3, 4, 5].map((n) => (
+                          <Button 
+                            key={n} 
+                            variant={filters.min_beds === n ? 'default' : 'outline'} 
+                            className="h-10 px-4 rounded-xl border-2 font-bold transition-all"
+                            onClick={() => setFilters({ min_beds: n || undefined })}
+                          >
+                            {n === 0 ? 'Any' : `${n}+`}
                           </Button>
                         ))}
                       </div>
                     </div>
-
-                    <Separator />
 
                     <Separator />
 
@@ -188,8 +198,8 @@ export default function SearchPage() {
                         <div className="flex items-center space-x-3 group cursor-pointer">
                           <Checkbox 
                             id="borehole-filter" 
-                            checked={hasBorehole}
-                            onCheckedChange={(checked) => setHasBorehole(!!checked)}
+                            checked={filters.has_borehole}
+                            onCheckedChange={(checked) => setFilters({ has_borehole: !!checked })}
                             className="h-5 w-5 rounded-md border-2" 
                           />
                           <label htmlFor="borehole-filter" className="text-sm font-medium leading-none cursor-pointer group-hover:text-primary transition-colors">
@@ -199,8 +209,8 @@ export default function SearchPage() {
                         <div className="flex items-center space-x-3 group cursor-pointer">
                           <Checkbox 
                             id="staff-filter" 
-                            checked={hasStaffQuarters}
-                            onCheckedChange={(checked) => setHasStaffQuarters(!!checked)}
+                            checked={filters.has_staff_quarters}
+                            onCheckedChange={(checked) => setFilters({ has_staff_quarters: !!checked })}
                             className="h-5 w-5 rounded-md border-2" 
                           />
                           <label htmlFor="staff-filter" className="text-sm font-medium leading-none cursor-pointer group-hover:text-primary transition-colors">
@@ -215,8 +225,8 @@ export default function SearchPage() {
                           <Input 
                             type="number" 
                             placeholder="0" 
-                            value={minSolar}
-                            onChange={(e) => setMinSolar(e.target.value)}
+                            value={filters.min_solar_capacity || ''}
+                            onChange={(e) => setFilters({ min_solar_capacity: e.target.value ? parseFloat(e.target.value) : undefined })}
                             className="h-10 rounded-xl"
                           />
                         </div>
@@ -225,8 +235,8 @@ export default function SearchPage() {
                           <Input 
                             type="number" 
                             placeholder="0" 
-                            value={minGenerator}
-                            onChange={(e) => setMinGenerator(e.target.value)}
+                            value={filters.min_generator_capacity || ''}
+                            onChange={(e) => setFilters({ min_generator_capacity: e.target.value ? parseFloat(e.target.value) : undefined })}
                             className="h-10 rounded-xl"
                           />
                         </div>
@@ -235,28 +245,11 @@ export default function SearchPage() {
                           <Input 
                             type="number" 
                             placeholder="0" 
-                            value={minWaterTank}
-                            onChange={(e) => setMinWaterTank(e.target.value)}
+                            value={filters.min_water_tank_capacity || ''}
+                            onChange={(e) => setFilters({ min_water_tank_capacity: e.target.value ? parseInt(e.target.value) : undefined })}
                             className="h-10 rounded-xl"
                           />
                         </div>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Amenities Section */}
-                    <div className="space-y-4">
-                      <Label className="text-base font-bold">Popular Amenities</Label>
-                      <div className="grid grid-cols-2 gap-4">
-                        {['Borehole', 'Solar Power', 'Swimming Pool', 'Security Guard', 'Pet Friendly', 'Fibre Installed'].map((amenity) => (
-                          <div key={amenity} className="flex items-center space-x-3 group cursor-pointer">
-                            <Checkbox id={amenity} className="h-5 w-5 rounded-md border-2" />
-                            <label htmlFor={amenity} className="text-sm font-medium leading-none cursor-pointer group-hover:text-primary transition-colors">
-                              {amenity}
-                            </label>
-                          </div>
-                        ))}
                       </div>
                     </div>
                   </div>
@@ -266,46 +259,60 @@ export default function SearchPage() {
                   <div className="flex items-center justify-between w-full gap-4">
                     <Button 
                       variant="ghost" 
-                      className="font-bold"
-                      onClick={() => {
-                        setHasBorehole(false)
-                        setHasStaffQuarters(false)
-                        setMinSolar('')
-                        setMinGenerator('')
-                        setMinWaterTank('')
-                      }}
+                      className="font-bold underline text-muted-foreground"
+                      onClick={() => resetFilters()}
                     >
-                      Clear All
+                      Reset All
                     </Button>
                     <SheetClose asChild>
-                      <Button className="flex-1 h-12 rounded-xl font-bold text-lg shadow-lg">Show {filteredProperties.length} Results</Button>
+                      <Button className="flex-1 h-12 rounded-xl font-bold text-lg shadow-lg">
+                        Apply Filters
+                      </Button>
                     </SheetClose>
                   </div>
                 </SheetFooter>
               </SheetContent>
             </Sheet>
+
+            <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
+              <SelectTrigger className="w-fit h-10 gap-2 rounded-xl border-border/60 bg-background px-4 font-semibold text-[13px] hover:bg-secondary/20 transition-colors">
+                <SelectValue placeholder="Sort By" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest first</SelectItem>
+                <SelectItem value="price_asc">Price: Low to High</SelectItem>
+                <SelectItem value="price_desc">Price: High to Low</SelectItem>
+                <SelectItem value="most_popular">Most Viewed</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </Container>
       </header>
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-hidden">
-        {viewMode === 'grid' ? (
-          <ScrollArea className="h-full">
+        {isLoading ? (
+          <div className="h-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <p className="font-medium animate-pulse">Finding your perfect property...</p>
+          </div>
+        ) : viewMode === 'grid' ? (
+          <ScrollArea className="h-full" onScroll={(e) => {
+            const element = e.currentTarget
+            if (element.scrollHeight - element.scrollTop === element.clientHeight) {
+              if (hasNextPage && !isFetchingNextPage) fetchNextPage()
+            }
+          }}>
             <Container className="py-8 space-y-8">
               <div className="flex items-center justify-between">
                 <h2 className="text-[15px] font-semibold text-muted-foreground">
-                  Showing <span className="text-foreground">{filteredProperties.length}</span> properties
+                  Showing <span className="text-foreground">{totalCount}</span> properties
                 </h2>
-                <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-medium text-muted-foreground">Sort by:</span>
-                  <Button variant="ghost" size="sm" className="font-semibold text-[13px] h-8 px-2 hover:bg-secondary/50">Newest first</Button>
-                </div>
               </div>
 
-              {filteredProperties.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 gap-y-8">
-                  {filteredProperties.map((property) => (
+              {properties.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
+                  {properties.map((property) => (
                     <PropertyCard key={property.id} property={property as any} />
                   ))}
                 </div>
@@ -315,19 +322,27 @@ export default function SearchPage() {
                   description="We couldn't find any properties matching your current filters. Try adjust your search."
                   action={{
                     label: "Clear all filters",
-                    onClick: () => { setSearchQuery(''); setListingType('all'); setPropertyType('all'); }
+                    onClick: () => { setSearchQuery(''); resetFilters(); }
                   }}
                 />
               )}
+
+              {isFetchingNextPage && (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              )}
+              
+              <div className="h-20" /> {/* Extra space at bottom */}
             </Container>
           </ScrollArea>
         ) : (
           <InteractiveMap 
-            markers={filteredProperties.slice(0, 3).map(p => ({
+            markers={properties.slice(0, 50).map(p => ({
               id: p.id,
               label: p.title,
-              position: [0, 0], // In a real app these would be real coords
-              price: p.price.toString()
+              position: [p.latitude || 0, p.longitude || 0],
+              price: p.asking_price?.toString() || p.monthly_rent?.toString() || 'Contact'
             }))}
           />
         )}

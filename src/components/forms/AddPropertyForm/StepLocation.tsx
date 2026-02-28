@@ -77,8 +77,8 @@ export default function StepLocation({ data, updateData }: StepLocationProps) {
         <Input 
           placeholder="Ex: 123 BlueOak Drive" 
           className="h-14 rounded-xl border-2 bg-secondary/10"
-          value={data.street_address || ''}
-          onChange={(e) => updateData({ street_address: e.target.value })}
+          value={data.address || ''}
+          onChange={(e) => updateData({ address: e.target.value })}
         />
       </div>
 

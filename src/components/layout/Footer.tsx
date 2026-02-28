@@ -5,63 +5,74 @@ import Container from './Container'
 export default function Footer() {
   const sections = [
     {
-      title: 'Support',
+      title: 'Discover',
       links: [
-        { label: 'Help Center', href: '#' },
-        { label: 'Safety Information', href: '#' },
-        { label: 'Cancellation options', href: '#' },
-        { label: 'Our COVID-19 Response', href: '#' },
-        { label: 'Supporting people with disabilities', href: '#' },
-        { label: 'Report a neighborhood concern', href: '#' },
+        { label: 'Properties for Sale', href: `${ROUTES.SEARCH}?lt=sale` },
+        { label: 'Properties to Let', href: `${ROUTES.SEARCH}?lt=rent` },
+        { label: 'New Developments', href: `${ROUTES.SEARCH}?sort=newest` },
+        { label: 'Featured Listings', href: `${ROUTES.SEARCH}?featured=true` },
+        { label: 'Commercial', href: `${ROUTES.SEARCH}?type=commercial` },
       ]
     },
     {
-      title: 'Community',
+      title: 'Sell & Let',
       links: [
-        { label: 'BlueOak.org: disaster relief', href: '#' },
-        { label: 'Support Afghan refugees', href: '#' },
-        { label: 'Combating discrimination', href: '#' },
-        { label: 'Referrals & Rewards', href: '#' },
-        { label: 'Gift cards', href: '#' },
-      ]
-    },
-    {
-      title: 'Partnerships',
-      links: [
-        { label: 'List your property', href: ROUTES.ADD_PROPERTY },
-        { label: 'BlueOak for Work', href: '#' },
-        { label: 'Developer Tools', href: '#' },
-        { label: 'Asset Management', href: '#' },
-        { label: 'Investment Club', href: '#' },
+        { label: 'List a Property', href: ROUTES.ADD_PROPERTY },
+        { label: 'Agent Services', href: '#' },
+        { label: 'Valuation', href: '#' },
+        { label: 'Marketing', href: '#' },
       ]
     },
     {
       title: 'Company',
       links: [
-        { label: 'About us', href: '#' },
+        { label: 'About BlueOak', href: '#' },
+        { label: 'Press', href: '#' },
         { label: 'Careers', href: '#' },
-        { label: 'Press releases', href: '#' },
-        { label: 'Investors', href: '#' },
-        { label: 'Sustainability', href: '#' },
+        { label: 'Contact', href: '#' },
+      ]
+    },
+    {
+      title: 'Legal',
+      links: [
+        { label: 'Privacy Policy', href: '#' },
+        { label: 'Terms of Service', href: '#' },
+        { label: 'Cookie Policy', href: '#' },
+        { label: 'Sitemap', href: '#' },
       ]
     }
   ]
 
   return (
-    <footer className="bg-secondary/20 border-t border-secondary/50 pt-16 pb-32 md:pb-12 mt-24">
+    <footer className="bg-charcoal text-white/70 border-t border-white/5 pt-16 pb-28 md:pb-16 mt-0">
+      {/* Gold hairline */}
+      <div className="w-full h-px bg-gradient-to-r from-transparent via-[hsl(var(--gold)/0.4)] to-transparent mb-16" />
+
       <Container>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-12 px-4">
+        {/* Brand + Links */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-16">
+          {/* Brand column */}
+          <div className="col-span-2 md:col-span-1 flex flex-col gap-4">
+            <span className="font-serif text-2xl text-white font-medium tracking-tight">
+              {APP_NAME}
+            </span>
+            <p className="text-white/40 text-xs leading-relaxed">
+              The world's most exclusive property marketplace for discerning buyers and sellers.
+            </p>
+          </div>
+
+          {/* Link columns */}
           {sections.map((section) => (
             <div key={section.title} className="flex flex-col gap-4">
-              <h4 className="text-[12px] font-black uppercase tracking-widest text-foreground">
+              <h5 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">
                 {section.title}
-              </h4>
-              <ul className="flex flex-col gap-3">
+              </h5>
+              <ul className="flex flex-col gap-2.5">
                 {section.links.map((link) => (
                   <li key={link.label}>
-                    <Link 
-                      to={link.href} 
-                      className="text-[14px] font-medium text-muted-foreground hover:text-primary transition-colors"
+                    <Link
+                      to={link.href}
+                      className="text-[13px] text-white/50 hover:text-white transition-colors duration-200"
                     >
                       {link.label}
                     </Link>
@@ -72,23 +83,15 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="mt-16 pt-8 border-t border-secondary/50 flex flex-col md:flex-row items-center justify-between gap-6 px-4">
-          <div className="flex flex-col md:flex-row items-center gap-2 md:gap-6 text-[13px] font-semibold text-muted-foreground">
-            <span className="text-foreground">© 2026 {APP_NAME}, Inc.</span>
-            <div className="flex items-center gap-6">
-              <Link to="#" className="hover:underline underline-offset-4">Privacy</Link>
-              <Link to="#" className="hover:underline underline-offset-4">Terms</Link>
-              <Link to="#" className="hover:underline underline-offset-4">Sitemap</Link>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-6">
-             <span className="text-[14px] font-bold flex items-center gap-2">
-               🌐 English (US)
-             </span>
-             <span className="text-[14px] font-bold">
-               ZMW (K)
-             </span>
+        {/* Bottom bar */}
+        <div className="pt-8 border-t border-white/8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-[12px] text-white/30 font-medium">
+            © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
+          </p>
+          <div className="flex items-center gap-6 text-[12px] text-white/30">
+            <span>English (EN)</span>
+            <span>·</span>
+            <span>ZMW (K)</span>
           </div>
         </div>
       </Container>

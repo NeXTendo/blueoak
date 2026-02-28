@@ -93,8 +93,8 @@ export default function StepFinancials({ data, updateData }: StepFinancialsProps
         <div className="flex items-center space-x-3 p-4 bg-secondary/10 rounded-xl border-2 border-transparent hover:border-primary/20 transition-all">
           <Checkbox 
             id="negotiable" 
-            checked={data.price_negotiable}
-            onCheckedChange={(checked) => updateData({ price_negotiable: !!checked })}
+            checked={data.negotiable}
+            onCheckedChange={(checked) => updateData({ negotiable: !!checked })}
           />
           <Label htmlFor="negotiable" className="text-[10px] font-black uppercase tracking-widest cursor-pointer">Negotiable</Label>
         </div>
@@ -198,8 +198,8 @@ export default function StepFinancials({ data, updateData }: StepFinancialsProps
           <Input 
             type="number" 
             className="h-12 rounded-xl border-2 bg-secondary/10"
-            value={data.levy_fee || ''}
-            onChange={(e) => updateData({ levy_fee: parseFloat(e.target.value) })}
+            value={data.levy || ''}
+            onChange={(e) => updateData({ levy: parseFloat(e.target.value) })}
           />
         </div>
         <div className="space-y-2">

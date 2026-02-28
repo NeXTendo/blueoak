@@ -76,8 +76,8 @@ export default function StepIdentity({ data, updateData }: StepIdentityProps) {
             <Input 
               type="date"
               className="h-14 rounded-xl border-2 bg-secondary/10"
-              value={data.available_from_date || ''}
-              onChange={(e) => updateData({ available_from_date: e.target.value })}
+              value={data.available_from || ''}
+              onChange={(e) => updateData({ available_from: e.target.value })}
             />
           </div>
           <div className="space-y-2">

@@ -69,10 +69,15 @@ export function useAuth() {
   }
 
   async function logout() {
-    await supabase.auth.signOut()
-    queryClient.clear()
-    clearAuth()
-    navigate(ROUTES.LOGIN)
+    try {
+      await supabase.auth.signOut()
+    } catch (err) {
+      console.warn('Supabase signOut failed, clearing local state anyway:', err)
+    } finally {
+      queryClient.clear()
+      clearAuth()
+      navigate(ROUTES.LOGIN)
+    }
   }
 
   async function forgotPassword(email: string) {
@@ -94,16 +99,17 @@ export function useAuth() {
     return data
   }
 
-  async function updateProfile(updates: any) {
+  async function updateProfile(updates: Partial<any>) {
     if (!userId) throw new Error('Not authenticated')
     setLoading(true)
     try {
       const { data, error } = await (supabase
-        .from('profiles' as any) as any)
+        .from('profiles') as any)
         .update(updates)
         .eq('id', userId)
         .select()
         .single()
+      
       if (error) throw error
       setProfile(data as any)
       return data
@@ -131,16 +137,21 @@ export function useAuthInit() {
   useEffect(() => {
     let mounted = true
 
+    // Safety timeout: If auth takes more than 5s, mark as initialized anyway
+    // to prevent the app from being stuck on a global spinner.
+    const timeout = setTimeout(() => {
+      if (mounted) {
+        console.warn('Auth initialization timed out. Proceeding...');
+        setInitialized(true);
+      }
+    }, 5000);
+
     async function init() {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (!mounted) return
         setSession(session)
 
-        // Mark as initialized immediately so the UI can render
-        setInitialized(true)
-
-        // Fetch profile in the background (non-blocking)
         if (session) {
           try {
             const { data } = await supabase.from('profiles')
@@ -153,10 +164,17 @@ export function useAuthInit() {
             console.error('Failed to fetch profile during init:', profileErr)
           }
         }
+        
+        if (mounted) {
+          clearTimeout(timeout)
+          setInitialized(true)
+        }
       } catch (error) {
         console.error('Auth initialization error:', error)
-        // Even on error, mark as initialized so the app doesn't hang
-        if (mounted) setInitialized(true)
+        if (mounted) {
+          clearTimeout(timeout)
+          setInitialized(true)
+        }
       }
     }
 
@@ -164,29 +182,12 @@ export function useAuthInit() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        const currentSession = useAuthStore.getState().session
-
-        // Always update session on change events from Supabase
         setSession(newSession)
-
-        // Only fetch profile if user identity changed or explicitly signed in
-        if (newSession?.user?.id !== currentSession?.user?.id || event === 'SIGNED_IN') {
-          if (newSession) {
-            try {
-              const { data, error } = await supabase.from('profiles')
-                .select('*')
-                .eq('id', newSession.user.id)
-                .single()
-
-              if (error) throw error
-              if (mounted) setProfile(data)
-            } catch (err) {
-              console.error('Error fetching profile on auth change:', err)
-              if (mounted) setProfile(null)
-            }
-          } else {
-            if (mounted) setProfile(null)
-          }
+        if (newSession) {
+          const { data } = await supabase.from('profiles').select('*').eq('id', newSession.user.id).single()
+          setProfile(data)
+        } else {
+          setProfile(null)
         }
       }
     )

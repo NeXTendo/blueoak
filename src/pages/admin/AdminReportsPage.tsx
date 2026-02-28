@@ -6,7 +6,8 @@ import {
   ChevronRight, 
   Flag,
   User,
-  Building2
+  Building2,
+  Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,46 +15,25 @@ import { Card } from '@/components/ui/card'
 import Container from '@/components/layout/Container'
 import { cn } from '@/lib/utils'
 import EmptyState from '@/components/common/EmptyState'
-
-const MOCK_REPORTS = [
-  { 
-    id: 'REP-742', 
-    type: 'Inaccurate Listing', 
-    severity: 'medium', 
-    reporter: 'John Tembo', 
-    target: 'Modern Villa - Roma',
-    status: 'open',
-    time: '4 hours ago',
-    description: "The property photos don't match the current state. The swimming pool is non-functional."
-  },
-  { 
-    id: 'REP-743', 
-    type: 'User Misconduct', 
-    severity: 'high', 
-    reporter: 'Sarah Chanda', 
-    target: 'Kelvin Phiri (Agent)',
-    status: 'investigating',
-    time: '6 hours ago',
-    description: 'Agent requested off-platform payment to bypass system fees.'
-  },
-  { 
-    id: 'REP-744', 
-    type: 'Technical Issue', 
-    severity: 'low', 
-    reporter: 'Samantha M.', 
-    target: 'Add Property Protocol',
-    status: 'resolved',
-    time: 'Yesterday',
-    description: 'Unable to upload media files in HEIC format.'
-  }
-]
+import { useAdminReports } from '@/hooks/useAdmin'
 
 export default function AdminReportsPage() {
   const [activeTab, setActiveTab] = useState('open')
+  const { data: reports, isLoading } = useAdminReports(activeTab)
 
-  const filteredReports = MOCK_REPORTS.filter(r => 
-    activeTab === 'all' || r.status === activeTab
-  )
+  const stats = [
+    { label: 'Unresolved', value: reports?.filter((r: any) => r.status === 'open').length || 0, color: 'text-red-500', bg: 'bg-red-500/10' },
+    { label: 'Investigating', value: reports?.filter((r: any) => r.status === 'under_review').length || 0, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { label: 'Resolved (All)', value: reports?.filter((r: any) => r.status === 'resolved').length || 0, color: 'text-green-500', bg: 'bg-green-500/10' }
+  ]
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background pb-20">
@@ -78,11 +58,7 @@ export default function AdminReportsPage() {
         <Container className="space-y-12">
            {/* Report Stats */}
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                { label: 'Unresolved', value: '7', color: 'text-red-500', bg: 'bg-red-500/10' },
-                { label: 'Investigating', value: '4', color: 'text-amber-500', bg: 'bg-amber-500/10' },
-                { label: 'Resolved (24h)', value: '12', color: 'text-green-500', bg: 'bg-green-500/10' }
-              ].map((stat) => (
+              {stats.map((stat) => (
                 <div key={stat.label} className="p-8 rounded-[2.5rem] border border-secondary/50 shadow-premium flex items-center justify-between">
                    <div className="space-y-1">
                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">{stat.label}</p>
@@ -97,7 +73,7 @@ export default function AdminReportsPage() {
 
            {/* Filters */}
            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-              {['open', 'investigating', 'resolved', 'all'].map((tab) => (
+              {['open', 'under_review', 'resolved', 'all'].map((tab) => (
                 <Button 
                   key={tab}
                   variant={activeTab === tab ? 'default' : 'outline'}
@@ -113,27 +89,25 @@ export default function AdminReportsPage() {
 
            {/* Report Cards */}
            <div className="space-y-4">
-              {filteredReports.length > 0 ? (
-                filteredReports.map((report) => (
+              {reports && reports.length > 0 ? (
+                reports.map((report: any) => (
                   <Card key={report.id} className="rounded-[2.5rem] border border-secondary/50 shadow-premium overflow-hidden hover:border-primary/30 transition-all duration-300">
                     <div className="p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
                         {/* Identity Section */}
                         <div className="lg:col-span-1 space-y-4">
                           <div className="flex items-center justify-between">
                               <Badge variant="outline" className="rounded-lg font-black text-[9px] uppercase tracking-widest px-2 py-0">
-                                {report.id}
+                                {report.id.substring(0, 8)}
                               </Badge>
-                              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">{report.time}</span>
+                              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">
+                                {new Date(report.created_at).toLocaleDateString()}
+                              </span>
                           </div>
                           <div className="space-y-1">
-                              <h3 className="text-lg font-black tracking-tight">{report.type}</h3>
-                              <div className={cn("flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest", 
-                                report.severity === 'high' ? "text-red-500" :
-                                report.severity === 'medium' ? "text-amber-500" :
-                                "text-blue-500"
-                              )}>
+                              <h3 className="text-lg font-black tracking-tight">{report.report_type}</h3>
+                              <div className={cn("flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-blue-500")}>
                                 <AlertTriangle size={12} />
-                                {report.severity} Priority
+                                System Integrity
                               </div>
                           </div>
                         </div>
@@ -145,19 +119,19 @@ export default function AdminReportsPage() {
                                 <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/50">Reporter</p>
                                 <div className="flex items-center gap-2">
                                     <User size={14} className="text-primary/40" />
-                                    <span className="text-xs font-bold">{report.reporter}</span>
+                                    <span className="text-xs font-bold">{report.reporter?.full_name || 'Anonymous'}</span>
                                 </div>
                               </div>
                               <div className="space-y-1">
                                 <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/50">Target Protocol</p>
                                 <div className="flex items-center gap-2">
                                     <Building2 size={14} className="text-primary/40" />
-                                    <span className="text-xs font-bold truncate">{report.target}</span>
+                                    <span className="text-xs font-bold truncate">{report.property?.title || report.reported?.full_name || 'System Event'}</span>
                                 </div>
                               </div>
                           </div>
                           <p className="text-sm font-medium text-muted-foreground leading-relaxed italic">
-                              "{report.description}"
+                              "{report.reason}"
                           </p>
                         </div>
 
@@ -166,7 +140,7 @@ export default function AdminReportsPage() {
                           <div className="flex items-center gap-2 mb-auto">
                               <Badge className={cn("rounded-full font-black text-[8px] uppercase tracking-widest px-3 py-0.5 border-none", 
                                 report.status === 'resolved' ? "bg-green-500/10 text-green-500" :
-                                report.status === 'investigating' ? "bg-amber-500/10 text-amber-500" :
+                                report.status === 'under_review' ? "bg-amber-500/10 text-amber-500" :
                                 "bg-red-500/10 text-red-500"
                               )}>
                                 {report.status}

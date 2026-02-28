@@ -8,16 +8,16 @@ import {
   Settings, 
   Edit3, 
   Heart, 
-  Star,
   ShieldCheck,
   Package,
   LogOut,
   ChevronRight,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { MOCK_PROPERTIES } from '@/lib/mock-data'
+import { useUserProperties, useSavedProperties } from '@/hooks/useProperties'
 import PropertyCard from '@/components/property/PropertyCard'
 import Container from '@/components/layout/Container'
 import { ROUTES } from '@/lib/constants'
@@ -28,13 +28,14 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('listings')
 
-  const userStats = [
-    { label: 'Portfolio Assets', value: '12', icon: Package },
-    { label: 'Saved Assets', value: '45', icon: Heart },
-    { label: 'Reputation', value: '4.9', icon: Star },
-  ]
+  const { data: myProperties = [], isLoading: isLoadingMy } = useUserProperties()
+  const { data: savedProperties = [], isLoading: isLoadingSaved } = useSavedProperties()
 
-  const myProperties = MOCK_PROPERTIES.slice(0, 4)
+  const userStats = [
+    { label: 'Portfolio Assets', value: myProperties.length.toString(), icon: Package },
+    { label: 'Saved Assets', value: savedProperties.length.toString(), icon: Heart },
+    { label: 'Reputation', value: 'New', icon: ShieldCheck },
+  ]
 
   const handleLogout = async () => {
     await logout()
@@ -68,9 +69,9 @@ export default function ProfilePage() {
               <div className="flex flex-col items-center text-center space-y-8 relative z-10">
                 <div className="relative">
                   <Avatar className="h-32 w-32 ring-8 ring-secondary/50 shadow-2xl">
-                    <AvatarImage src={profile?.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=2080"} />
-                    <AvatarFallback className="text-4xl font-black bg-secondary text-primary">
-                      {profile?.full_name?.charAt(0) || 'B'}
+                    <AvatarImage src={profile?.avatar_url || ""} />
+                    <AvatarFallback className="text-4xl font-black bg-secondary text-primary uppercase">
+                      {profile?.full_name?.charAt(0) || profile?.username?.charAt(0) || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <Link 
@@ -83,15 +84,15 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-3">
-                  <h1 className="text-3xl font-black uppercase tracking-tighter leading-none">{profile?.full_name || 'Anonymous User'}</h1>
+                  <h1 className="text-3xl font-black uppercase tracking-tighter leading-none">{profile?.full_name || profile?.username || 'Anonymous User'}</h1>
                   <div className="flex items-center justify-center gap-2">
                     <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 px-4 py-1.5 bg-secondary/50 rounded-full">
-                      {profile?.user_type || 'Buyer Access'}
+                      {profile?.user_type || 'User'}
                     </span>
-                    {profile?.user_type === 'agent' && (
+                    {profile?.is_verified && (
                       <div className="flex items-center gap-1 text-primary">
                         <ShieldCheck size={12} />
-                        <span className="text-[8px] font-black uppercase tracking-widest">Verified Broker</span>
+                        <span className="text-[8px] font-black uppercase tracking-widest">Verified</span>
                       </div>
                     )}
                   </div>
@@ -100,7 +101,7 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-3 gap-8 w-full border-y border-secondary py-8">
                   {userStats.map((stat) => (
                     <div key={stat.label} className="space-y-1">
-                      <div className="text-lg font-black tracking-tight">{stat.value}</div>
+                      <div className="text-lg font-black tracking-tighter">{stat.value}</div>
                       <div className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/40">{stat.label}</div>
                     </div>
                   ))}
@@ -109,12 +110,12 @@ export default function ProfilePage() {
                 <div className="w-full space-y-4 pt-2">
                   {[
                     { icon: Mail, value: profile?.email || 'No identity record' },
-                    { icon: MapPin, value: 'Lusaka Intelligence Zone' },
-                    { icon: Calendar, value: 'Registered ' + new Date().getFullYear() },
+                    { icon: MapPin, value: profile?.city || 'Location unset' },
+                    { icon: Calendar, value: 'Established ' + (profile?.created_at ? new Date(profile.created_at).getFullYear() : new Date().getFullYear()) },
                   ].map((info, i) => (
                     <div key={i} className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                      <info.icon size={14} className="text-primary/40" />
-                      {info.value}
+                      <info.icon size={14} className="text-primary/40 shrink-0" />
+                      <span className="truncate">{info.value}</span>
                     </div>
                   ))}
                 </div>
@@ -139,21 +140,23 @@ export default function ProfilePage() {
             </div>
 
             {/* Program CTA */}
-            <div className="p-10 bg-primary rounded-[3rem] space-y-6 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="text-[10px] font-black uppercase tracking-[0.4em] text-primary-foreground/40 italic">Exclusive Program</div>
-              <h3 className="text-2xl font-black uppercase tracking-tight text-white leading-tight">Elevate to <br />Asset Manager.</h3>
-              <p className="text-xs font-medium text-white/50 leading-relaxed">
-                Unlock professional listing infrastructure and global market reach.
-              </p>
-              <button 
-                title="Apply for elevation"
-                className="w-full h-14 bg-white text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-primary-foreground transition-all flex items-center justify-center gap-2"
-              >
-                Apply for Elevation
-                <ChevronRight size={14} />
-              </button>
-            </div>
+            {profile?.user_type !== 'agent' && (
+              <div className="p-10 bg-primary rounded-[3rem] space-y-6 relative overflow-hidden group">
+                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="text-[10px] font-black uppercase tracking-[0.4em] text-primary-foreground/40 italic">Exclusive Program</div>
+                <h3 className="text-2xl font-black uppercase tracking-tight text-white leading-tight">Elevate to <br />Asset Manager.</h3>
+                <p className="text-xs font-medium text-white/50 leading-relaxed">
+                  Unlock professional listing infrastructure and global market reach.
+                </p>
+                <button 
+                  title="Apply for elevation"
+                  className="w-full h-14 bg-white text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-primary-foreground transition-all flex items-center justify-center gap-2"
+                >
+                  Apply for Elevation
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            )}
           </motion.aside>
 
           {/* Asset Management Area */}
@@ -191,27 +194,31 @@ export default function ProfilePage() {
               >
                 {activeTab === 'listings' && (
                   <div className="space-y-10">
-                    <div className="flex items-end justify-between">
+                    <div className="flex items-end justify-between gap-4">
                       <div className="space-y-2">
                         <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">Active Management</span>
                         <h2 className="text-4xl font-black uppercase tracking-tighter">Your Active Assets</h2>
                       </div>
                       <Link 
                         to={ROUTES.ADD_PROPERTY} 
-                        className="h-14 px-8 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center text-[10px] font-black uppercase tracking-widest shadow-lg hover:shadow-premium transition-all"
+                        className="h-14 px-8 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center text-[10px] font-black uppercase tracking-widest shadow-lg hover:shadow-premium transition-all shrink-0"
                       >
                         Initiate Listing
                       </Link>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      {myProperties.map((p) => (
-                        <PropertyCard key={p.id} property={p as any} />
-                      ))}
-                    </div>
-
-                    {myProperties.length === 0 && (
-                      <div className="py-32 bg-secondary/20 rounded-[3rem] border-2 border-dashed border-secondary flex flex-col items-center justify-center text-center space-y-6">
+                    {isLoadingMy ? (
+                      <div className="flex items-center justify-center py-20">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
+                      </div>
+                    ) : myProperties.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {myProperties.map((p) => (
+                          <PropertyCard key={p.id} property={p as any} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-20 md:py-32 bg-secondary/20 rounded-[3rem] border-2 border-dashed border-secondary flex flex-col items-center justify-center text-center space-y-6">
                         <div className="space-y-2">
                           <h4 className="text-xl font-black uppercase tracking-tight">Zero Active Assets</h4>
                           <p className="text-xs font-medium text-muted-foreground italic">Initiate your portfolio strategy today.</p>
@@ -239,11 +246,30 @@ export default function ProfilePage() {
                         <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                       </button>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      {MOCK_PROPERTIES.slice(4, 6).map((p) => (
-                        <PropertyCard key={p.id} property={p as any} />
-                      ))}
-                    </div>
+                    {isLoadingSaved ? (
+                      <div className="flex items-center justify-center py-20">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
+                      </div>
+                    ) : savedProperties.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {savedProperties.map((p) => (
+                          <PropertyCard key={p.id} property={p as any} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-20 md:py-32 bg-secondary/20 rounded-[3rem] border-2 border-dashed border-secondary flex flex-col items-center justify-center text-center space-y-6">
+                        <div className="space-y-2">
+                          <h4 className="text-xl font-black uppercase tracking-tight">No Saved Assets</h4>
+                          <p className="text-xs font-medium text-muted-foreground italic">Explore properties to build your stack.</p>
+                        </div>
+                        <Link 
+                          to={ROUTES.SEARCH}
+                          className="text-[10px] font-black uppercase tracking-widest text-primary border-b-2 border-primary pb-1"
+                        >
+                          Explore Market
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -262,8 +288,8 @@ export default function ProfilePage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8">
                       {[
-                        { title: 'Market Specialization', items: ['Residential Luxury', 'Cinematic Plots'] },
-                        { title: 'Active Markets', items: ['Lusaka Intelligence Zone', 'Nairobi Heights'] },
+                        { title: 'Identity Type', items: [profile?.user_type || 'User'] },
+                        { title: 'Verified Status', items: [profile?.is_verified ? 'Verified Citizen' : 'Pending Verification'] },
                       ].map((section, i) => (
                         <div key={i} className="p-8 bg-secondary/20 rounded-3xl border border-secondary space-y-4">
                           <h4 className="text-[10px] font-black uppercase tracking-widest text-primary">{section.title}</h4>
