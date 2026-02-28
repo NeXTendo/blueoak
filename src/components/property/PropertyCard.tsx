@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Heart, MapPin, Bed, Bath, Maximize, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -8,7 +9,7 @@ interface PropertyCardProps {
   className?: string
 }
 
-export default function PropertyCard({ property, className }: PropertyCardProps) {
+const PropertyCard = memo(function PropertyCard({ property, className }: PropertyCardProps) {
   const navigate = useNavigate()
 
   const price = property.asking_price || property.monthly_rent || property.nightly_rate || property.price || 0
@@ -153,4 +154,6 @@ export default function PropertyCard({ property, className }: PropertyCardProps)
       </div>
     </div>
   )
-}
+})
+
+export default PropertyCard

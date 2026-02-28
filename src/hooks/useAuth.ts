@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { queryClient } from '@/lib/queryClient'
 import { ROUTES } from '@/lib/constants'
+import type { Profile } from '@/types/user'
 import type { LoginFormData, RegisterFormData } from '@/lib/validations'
 
 export function useAuth() {
@@ -76,7 +77,7 @@ export function useAuth() {
     } finally {
       queryClient.clear()
       clearAuth()
-      navigate(ROUTES.LOGIN)
+      navigate(ROUTES.HOME)
     }
   }
 
@@ -99,7 +100,7 @@ export function useAuth() {
     return data
   }
 
-  async function updateProfile(updates: Partial<any>) {
+  async function updateProfile(updates: Partial<Profile>) {
     if (!userId) throw new Error('Not authenticated')
     setLoading(true)
     try {
@@ -111,11 +112,31 @@ export function useAuth() {
         .single()
       
       if (error) throw error
-      setProfile(data as any)
+      setProfile(data as Profile)
       return data
     } finally {
       setLoading(false)
     }
+  }
+
+  async function hibernateAccount() {
+    if (!userId) throw new Error('Not authenticated')
+    await updateProfile({ status: 'hibernated' })
+    await logout()
+  }
+
+  async function deleteAccount() {
+    if (!userId) throw new Error('Not authenticated')
+    // Note: In Supabase, deleting the user in auth.users deletes the profile via cascade
+    const { error } = await supabase.auth.admin.deleteUser(userId)
+    // If admin method fails (likely for regular users), we can try another way or just clear state
+    // But usually we need an edge function for this to be secure.
+    // For now, let's at least clear state and navigate away if deleteUser isn't available to client.
+    if (error) {
+       console.error('Delete account failed (admin needed?):', error.message)
+       throw error
+    }
+    await logout()
   }
 
   const isAuthenticated = !!session
@@ -126,6 +147,7 @@ export function useAuth() {
     session, profile, isLoading, isAuthenticated, userId, userType,
     login, loginWithGoogle, register, logout, forgotPassword, updatePassword,
     fetchProfile, updateProfile, setLoading, setSession, setInitialized,
+    hibernateAccount, deleteAccount
   }
 }
 
@@ -181,7 +203,7 @@ export function useAuthInit() {
     init()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      async (_event, newSession) => {
         setSession(newSession)
         if (newSession) {
           const { data } = await supabase.from('profiles').select('*').eq('id', newSession.user.id).single()

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Menu,
   Search,
@@ -9,6 +9,7 @@ import {
   Calendar,
   Home,
   X,
+  ChevronDown,
   LayoutDashboard,
   Users,
   AlertTriangle,
@@ -31,7 +32,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Container from './Container'
 import { cn } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { Dialog, DialogContent, DialogTitle, DialogClose } from '@/components/ui/dialog'
+import AuthModal from '@/components/auth/AuthModal'
+
+const SUGGESTED_LOCATIONS = [
+  { name: 'Lusaka', country: 'Zambia' },
+  { name: 'Johannesburg', country: 'South Africa' },
+  { name: 'Nairobi', country: 'Kenya' },
+  { name: 'Cape Town', country: 'South Africa' },
+  { name: 'Harare', country: 'Zimbabwe' },
+  { name: 'Gaborone', country: 'Botswana' },
+]
+
+const TIMELINE_OPTIONS = ['Immediate', '3 Months', '6 Months', 'Flexible', 'Over a year']
 
 export function TopHeader() {
   const { profile, session } = useAuthStore()
@@ -43,8 +55,14 @@ export function TopHeader() {
   const [isScrolled, setIsScrolled] = useState(false)
   const isHomePage = location.pathname === ROUTES.HOME
 
-  const [activeSearch, setActiveSearch] = useState<'location' | 'when' | 'type' | null>(null)
+  const [authModal, setAuthModal] = useState<{ open: boolean; tab: 'login' | 'register' }>({ open: false, tab: 'login' })
+  const openLogin = () => setAuthModal({ open: true, tab: 'login' })
+  const openRegister = () => setAuthModal({ open: true, tab: 'register' })
+
+  const [activeDropdown, setActiveDropdown] = useState<'location' | 'when' | 'type' | null>(null)
   const [filters, setFilters] = useState({ location: '', when: '', type: '' })
+  const [locationQuery, setLocationQuery] = useState('')
+  const searchBarRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50)
@@ -53,12 +71,29 @@ export function TopHeader() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const SUGGESTED_LOCATIONS = [
-    { name: 'Lusaka, Zambia', sub: 'The Capital City' },
-    { name: 'Johannesburg, RSA', sub: 'Sandton & Surroundings' },
-    { name: 'Nairobi, Kenya', sub: 'Westlands & Kilimani' },
-    { name: 'Cape Town, RSA', sub: 'Atlantic Seaboard' },
-  ]
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchBarRef.current && !searchBarRef.current.contains(e.target as Node)) {
+        setActiveDropdown(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleSearch = () => {
+    const params = new URLSearchParams()
+    if (filters.location) params.set('city', filters.location)
+    if (filters.type) params.set('property_type', filters.type)
+    if (filters.when) params.set('when', filters.when)
+    setActiveDropdown(null)
+    navigate(`${ROUTES.SEARCH}?${params.toString()}`)
+  }
+
+  const filteredLocations = SUGGESTED_LOCATIONS.filter(loc =>
+    !locationQuery || loc.name.toLowerCase().includes(locationQuery.toLowerCase()) || loc.country.toLowerCase().includes(locationQuery.toLowerCase())
+  )
 
   // Mobile Header
   if (isMobile) {
@@ -75,17 +110,17 @@ export function TopHeader() {
 
             {/* Search Box */}
             <button
-              onClick={() => setActiveSearch('location')}
+              onClick={() => navigate(ROUTES.SEARCH)}
               className="flex-1 flex items-center gap-2.5 bg-secondary/30 border border-border/50 px-3.5 py-2.5 rounded-sm text-left transition-colors hover:border-[hsl(var(--gold))]"
             >
               <Search size={14} className="text-muted-foreground shrink-0" />
               <span className="text-[13px] font-medium text-foreground/70 truncate">
-                {filters.location || 'Search locations...'}
+                Search properties...
               </span>
             </button>
 
             {/* Avatar */}
-            <button onClick={() => navigate(session ? (isAdmin ? ROUTES.ADMIN : ROUTES.PROFILE) : ROUTES.LOGIN)} className="shrink-0 transition-transform active:scale-95">
+            <button onClick={() => session ? navigate(isAdmin ? ROUTES.ADMIN : ROUTES.PROFILE) : openLogin()} className="shrink-0 transition-transform active:scale-95">
               <Avatar className="h-8 w-8 ring-1 ring-border/50 rounded-sm">
                 <AvatarImage src={profile?.avatar_url || undefined} className="rounded-sm object-cover" />
                 <AvatarFallback className="bg-secondary text-foreground text-[11px] font-semibold rounded-sm">
@@ -95,13 +130,6 @@ export function TopHeader() {
             </button>
           </div>
         </Container>
-        <SearchDialog
-          activeSearch={activeSearch}
-          setActiveSearch={setActiveSearch}
-          filters={filters}
-          setFilters={setFilters}
-          suggestedLocations={SUGGESTED_LOCATIONS}
-        />
       </header>
     )
   }
@@ -112,8 +140,8 @@ export function TopHeader() {
       className={cn(
         "hidden md:flex flex-col fixed top-0 left-0 right-0 z-40 transition-all duration-500",
         isScrolled || !isHomePage
-          ? "bg-background/98 backdrop-blur-xl border-b border-border"
-          : "bg-transparent border-b border-transparent"
+          ? "bg-background/98 backdrop-blur-xl"
+          : "bg-gradient-to-b from-black/50 to-transparent backdrop-blur-none"
       )}
     >
       <Container className="h-18 flex items-center justify-between py-5">
@@ -132,8 +160,8 @@ export function TopHeader() {
         {/* Center: Nav links (desktop) */}
         <nav className="hidden lg:flex items-center gap-8">
           {[
-            { label: 'Buy', to: `${ROUTES.SEARCH}?lt=sale` },
-            { label: 'Rent', to: `${ROUTES.SEARCH}?lt=rent` },
+            { label: 'Buy', to: `${ROUTES.SEARCH}?listing_type=sale` },
+            { label: 'Rent', to: `${ROUTES.SEARCH}?listing_type=rent` },
             { label: 'New Developments', to: `${ROUTES.SEARCH}?sort=newest` },
           ].map(({ label, to }) => (
             <Link
@@ -148,21 +176,6 @@ export function TopHeader() {
             </Link>
           ))}
         </nav>
-        {/* Scrolled search pill (homepage only) */}
-        <div className={cn(
-          "absolute left-1/2 -translate-x-1/2 transition-all duration-400",
-          isHomePage && isScrolled ? "opacity-100 pointer-events-auto translate-y-0" : "opacity-0 pointer-events-none translate-y-1"
-        )}>
-          <button
-            onClick={() => setActiveSearch('location')}
-            className="flex items-center gap-3 bg-background border border-border shadow-card px-4 py-2 rounded-full hover:shadow-card-hover transition-shadow text-sm"
-          >
-            <Search size={14} className="text-muted-foreground" />
-            <span className="text-foreground/60 font-medium">{filters.location || 'Search properties...'}</span>
-            <div className="w-px h-4 bg-border mx-1" />
-            <span className="text-[hsl(var(--gold))] font-semibold text-xs uppercase tracking-wide">Search</span>
-          </button>
-        </div>
 
         {/* Right: Actions */}
         <div className="flex-1 flex items-center justify-end gap-5">
@@ -171,7 +184,7 @@ export function TopHeader() {
               to={ROUTES.ADMIN}
               className={cn(
                 "hidden lg:flex items-center gap-1.5 text-sm font-medium transition-colors",
-                isScrolled || !isHomePage ? "text-foreground/70 hover:text-gold" : "text-white/80 hover:text-white"
+                isScrolled || !isHomePage ? "text-foreground/70 hover:text-[hsl(var(--gold))]" : "text-white/80 hover:text-white"
               )}
             >
               <ShieldCheck size={15} />
@@ -182,7 +195,7 @@ export function TopHeader() {
               to={ROUTES.ADD_PROPERTY}
               className={cn(
                 "hidden lg:block text-sm font-medium transition-colors",
-                isScrolled || !isHomePage ? "text-foreground/70 hover:text-gold" : "text-white/80 hover:text-white"
+                isScrolled || !isHomePage ? "text-foreground/70 hover:text-[hsl(var(--gold))]" : "text-white/80 hover:text-white"
               )}
             >
               List Property
@@ -229,10 +242,10 @@ export function TopHeader() {
                 </>
               ) : (
                 <>
-                  <DropdownMenuItem onClick={() => navigate(ROUTES.LOGIN)} className="p-3 rounded-lg font-semibold text-sm cursor-pointer">
+                  <DropdownMenuItem onClick={openLogin} className="p-3 rounded-lg font-semibold text-sm cursor-pointer">
                     Log in
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate(ROUTES.REGISTER)} className="p-3 rounded-lg text-sm cursor-pointer text-muted-foreground">
+                  <DropdownMenuItem onClick={openRegister} className="p-3 rounded-lg text-sm cursor-pointer text-muted-foreground">
                     Create account
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -284,143 +297,221 @@ export function TopHeader() {
         </div>
       </Container>
 
-      {/* Expanded desktop search bar — only on homepage, before scroll */}
+      {/* Auth Modal */}
+      <AuthModal
+        open={authModal.open}
+        onClose={() => setAuthModal(m => ({ ...m, open: false }))}
+        initialTab={authModal.tab}
+      />
       <div className={cn(
-        "overflow-hidden transition-all duration-500",
-        isHomePage && !isScrolled ? "max-h-24 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+        "transition-all duration-500",
+        isHomePage && !isScrolled
+          ? "max-h-24 opacity-100 overflow-visible"
+          : "max-h-0 opacity-0 overflow-hidden pointer-events-none"
       )}>
-        <div className="pb-6 flex justify-center">
-          <button
-            onClick={() => setActiveSearch('location')}
-            className="flex items-center bg-white/10 backdrop-blur-md border border-white/25 shadow-lg rounded-full px-2 py-2 transition-all hover:bg-white/20 w-[85%] max-w-2xl"
-          >
-            <div className="flex-1 flex flex-col items-start px-6 text-left border-r border-white/20">
-              <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/50 mb-0.5">Location</span>
-              <span className="text-sm font-medium text-white/80 truncate w-full">{filters.location || 'Anywhere'}</span>
+        <div className="pb-6 flex justify-center" ref={searchBarRef}>
+          <div className="flex items-stretch bg-white/15 backdrop-blur-md border border-white/30 shadow-lg rounded-full w-[85%] max-w-2xl overflow-visible relative">
+
+            {/* Location Segment */}
+            <div className="relative flex-1">
+              <button
+                onClick={() => setActiveDropdown(activeDropdown === 'location' ? null : 'location')}
+                className={cn(
+                  "w-full flex flex-col items-start px-6 py-3 text-left rounded-l-full transition-colors",
+                  activeDropdown === 'location' ? "bg-white/20" : "hover:bg-white/10"
+                )}
+              >
+                <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/60 mb-0.5">Location</span>
+                <span className="text-sm font-medium text-white truncate w-full">{filters.location || 'Anywhere'}</span>
+              </button>
+
+              {/* Location Dropdown */}
+              {activeDropdown === 'location' && (
+                <div className="absolute top-[calc(100%+12px)] left-0 w-80 bg-background rounded-2xl shadow-premium border border-border/60 overflow-hidden z-50">
+                  <div className="p-4 border-b border-border/50">
+                    <div className="relative">
+                      <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <input
+                        autoFocus
+                        type="text"
+                        placeholder="Type a city or region..."
+                        className="w-full h-10 bg-secondary/40 rounded-lg pl-9 pr-4 text-sm font-medium outline-none focus:ring-2 ring-[hsl(var(--gold)/0.5)] border border-border"
+                        value={locationQuery}
+                        onChange={(e) => setLocationQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && locationQuery) {
+                            setFilters(f => ({ ...f, location: locationQuery }))
+                            setLocationQuery('')
+                            setActiveDropdown('when')
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="p-2">
+                    {filteredLocations.map(loc => (
+                      <button
+                        key={loc.name}
+                        onClick={() => {
+                          setFilters(f => ({ ...f, location: `${loc.name}, ${loc.country}` }))
+                          setLocationQuery('')
+                          setActiveDropdown('when')
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-secondary/50 text-left transition-colors group"
+                      >
+                        <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
+                          <MapPin size={13} className="text-muted-foreground group-hover:text-[hsl(var(--gold))] transition-colors" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{loc.name}</p>
+                          <p className="text-xs text-muted-foreground">{loc.country}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  {filters.location && (
+                    <div className="px-3 pb-3">
+                      <button
+                        onClick={() => { setFilters(f => ({ ...f, location: '' })); setLocationQuery('') }}
+                        className="text-xs text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
+                      >
+                        <X size={11} /> Clear location
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="flex-1 flex flex-col items-start px-6 text-left border-r border-white/20">
-              <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/50 mb-0.5">Timeline</span>
-              <span className="text-sm font-medium text-white/80 truncate w-full">{filters.when || 'Any time'}</span>
+
+            <div className="w-px bg-white/20 my-2 shrink-0" />
+
+            {/* Timeline Segment */}
+            <div className="relative flex-1">
+              <button
+                onClick={() => setActiveDropdown(activeDropdown === 'when' ? null : 'when')}
+                className={cn(
+                  "w-full flex flex-col items-start px-6 py-3 text-left transition-colors",
+                  activeDropdown === 'when' ? "bg-white/20" : "hover:bg-white/10"
+                )}
+              >
+                <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/60 mb-0.5">Timeline</span>
+                <span className="text-sm font-medium text-white truncate w-full flex items-center gap-1.5">
+                  {filters.when || 'Any time'}
+                  <ChevronDown size={12} className="text-white/50 mt-0.5" />
+                </span>
+              </button>
+
+              {/* Timeline Dropdown */}
+              {activeDropdown === 'when' && (
+                <div className="absolute top-[calc(100%+12px)] left-0 w-56 bg-background rounded-2xl shadow-premium border border-border/60 overflow-hidden z-50">
+                  <div className="p-2">
+                    {TIMELINE_OPTIONS.map(option => (
+                      <button
+                        key={option}
+                        onClick={() => {
+                          setFilters(f => ({ ...f, when: option }))
+                          setActiveDropdown('type')
+                        }}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors",
+                          filters.when === option
+                            ? "bg-[hsl(var(--gold)/0.12)] text-[hsl(var(--gold))]"
+                            : "hover:bg-secondary/50"
+                        )}
+                      >
+                        <Calendar size={13} className="shrink-0 text-muted-foreground" />
+                        <span className="text-sm font-medium">{option}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {filters.when && (
+                    <div className="px-3 pb-3 border-t border-border/40 pt-2">
+                      <button
+                        onClick={() => setFilters(f => ({ ...f, when: '' }))}
+                        className="text-xs text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
+                      >
+                        <X size={11} /> Clear
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="flex-1 flex flex-col items-start px-6 text-left">
-              <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/50 mb-0.5">Property Type</span>
-              <span className="text-sm font-medium text-white/80 truncate w-full">{filters.type || 'All types'}</span>
+
+            <div className="w-px bg-white/20 my-2 shrink-0" />
+
+            {/* Property Type Segment */}
+            <div className="relative flex-1">
+              <button
+                onClick={() => setActiveDropdown(activeDropdown === 'type' ? null : 'type')}
+                className={cn(
+                  "w-full flex flex-col items-start px-6 py-3 text-left transition-colors",
+                  activeDropdown === 'type' ? "bg-white/20" : "hover:bg-white/10"
+                )}
+              >
+                <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/60 mb-0.5">Property Type</span>
+                <span className="text-sm font-medium text-white truncate w-full flex items-center gap-1.5">
+                  {filters.type || 'All types'}
+                  <ChevronDown size={12} className="text-white/50 mt-0.5" />
+                </span>
+              </button>
+
+              {/* Type Dropdown */}
+              {activeDropdown === 'type' && (
+                <div className="absolute top-[calc(100%+12px)] right-0 w-64 bg-background rounded-2xl shadow-premium border border-border/60 overflow-hidden z-50 max-h-72 overflow-y-auto">
+                  <div className="p-2">
+                    <button
+                      onClick={() => {
+                        setFilters(f => ({ ...f, type: '' }))
+                        setActiveDropdown(null)
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors mb-1",
+                        !filters.type ? "bg-[hsl(var(--gold)/0.12)] text-[hsl(var(--gold))]" : "hover:bg-secondary/50"
+                      )}
+                    >
+                      <Home size={13} className="shrink-0 text-muted-foreground" />
+                      <span className="text-sm font-medium">All Types</span>
+                    </button>
+                    {PROPERTY_TYPES.map(type => (
+                      <button
+                        key={type.value}
+                        onClick={() => {
+                          setFilters(f => ({ ...f, type: type.value }))
+                          setActiveDropdown(null)
+                        }}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors",
+                          filters.type === type.value
+                            ? "bg-[hsl(var(--gold)/0.12)] text-[hsl(var(--gold))]"
+                            : "hover:bg-secondary/50"
+                        )}
+                      >
+                        <Home size={13} className="shrink-0 text-muted-foreground" />
+                        <span className="text-sm font-medium">{type.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="h-10 w-10 bg-[hsl(var(--gold))] text-white rounded-full flex items-center justify-center shrink-0 ml-3 shadow-gold-glow">
+
+            {/* Search Button */}
+            <button
+              title="Search properties"
+              onClick={handleSearch}
+              className="h-12 w-12 bg-[hsl(var(--gold))] text-white rounded-full flex items-center justify-center shrink-0 m-1.5 shadow-gold-glow hover:brightness-105 transition-all"
+            >
               <Search size={16} strokeWidth={2.5} />
-            </div>
-          </button>
+            </button>
+          </div>
         </div>
       </div>
-
-      <SearchDialog
-        activeSearch={activeSearch}
-        setActiveSearch={setActiveSearch}
-        filters={filters}
-        setFilters={setFilters}
-        suggestedLocations={SUGGESTED_LOCATIONS}
-      />
+      
+      {/* Scrolled state: compact search in header */}
+      {isScrolled && !isHomePage && (
+        <div className="hidden" /> // slot for future use
+      )}
     </header>
-  )
-}
-
-function SearchDialog({ activeSearch, setActiveSearch, filters, setFilters, suggestedLocations }: any) {
-  return (
-    <Dialog open={activeSearch !== null} onOpenChange={(open) => !open && setActiveSearch(null)}>
-      <DialogContent className="w-[95vw] max-w-xl bg-background border border-border p-0 overflow-hidden rounded-2xl shadow-premium flex flex-col max-h-[85vh]">
-        <div className="p-6 flex flex-col gap-6 overflow-y-auto flex-1">
-          <div className="flex items-center justify-between border-b border-border pb-5">
-            <DialogTitle className="font-serif text-2xl font-medium">
-              {activeSearch === 'location' && 'Where are you looking?'}
-              {activeSearch === 'when' && 'Your timeline'}
-              {activeSearch === 'type' && 'Property category'}
-            </DialogTitle>
-            <DialogClose className="h-8 w-8 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors shrink-0">
-              <X size={15} />
-            </DialogClose>
-          </div>
-
-          {activeSearch === 'location' && (
-            <div className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {suggestedLocations.map((loc: any) => (
-                  <button
-                    key={loc.name}
-                    onClick={() => { setFilters({ ...filters, location: loc.name }); setActiveSearch('when') }}
-                    className="flex items-center gap-3 p-4 rounded-lg border border-border bg-secondary/30 hover:border-[hsl(var(--gold)/0.5)] hover:bg-[hsl(var(--gold)/0.06)] text-left transition-all group"
-                  >
-                    <div className="h-9 w-9 rounded-full bg-background border border-border flex items-center justify-center shrink-0">
-                      <MapPin size={14} className="text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm group-hover:text-[hsl(var(--gold))] transition-colors">{loc.name}</p>
-                      <p className="text-xs text-muted-foreground">{loc.sub}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-              <div className="relative">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
-                <input
-                  type="text"
-                  placeholder="Type a city or region..."
-                  className="w-full h-12 bg-secondary/50 rounded-lg pl-10 pr-4 text-sm font-medium outline-none focus:ring-2 ring-[hsl(var(--gold)/0.4)] border border-border transition-all"
-                  value={filters.location}
-                  onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                  onKeyDown={(e) => e.key === 'Enter' && setActiveSearch('when')}
-                />
-              </div>
-            </div>
-          )}
-
-          {activeSearch === 'when' && (
-            <div className="grid grid-cols-2 gap-3">
-              {['Immediate', '3 Months', '6 Months', 'Flexible'].map((time) => (
-                <button
-                  key={time}
-                  onClick={() => { setFilters({ ...filters, when: time }); setActiveSearch('type') }}
-                  className="flex flex-col items-center justify-center p-6 rounded-lg border border-border bg-secondary/30 hover:border-[hsl(var(--gold)/0.5)] hover:bg-[hsl(var(--gold)/0.06)] transition-all gap-2"
-                >
-                  <Calendar size={18} className="text-muted-foreground" />
-                  <span className="font-medium text-sm">{time}</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {activeSearch === 'type' && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {PROPERTY_TYPES.map((type) => (
-                <button
-                  key={type.value}
-                  onClick={() => { setFilters({ ...filters, type: type.label }); setActiveSearch(null) }}
-                  className="flex flex-col items-center justify-center p-5 rounded-lg border border-border bg-secondary/30 hover:border-[hsl(var(--gold)/0.5)] hover:bg-[hsl(var(--gold)/0.06)] transition-all gap-2 group"
-                >
-                  <div className="h-9 w-9 rounded-full bg-background border border-border flex items-center justify-center group-hover:border-[hsl(var(--gold)/0.5)]">
-                    <Home size={14} className="text-muted-foreground" />
-                  </div>
-                  <span className="text-[11px] font-medium uppercase tracking-wide text-foreground/70">{type.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="flex gap-3 pt-4 border-t border-border mt-auto">
-            <button
-              onClick={() => setFilters({ location: '', when: '', type: '' })}
-              className="flex-1 h-11 border border-border rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-foreground/70"
-            >
-              Clear
-            </button>
-            <button
-              onClick={() => setActiveSearch(null)}
-              className="flex-1 h-11 bg-[hsl(var(--gold))] text-white rounded-lg text-sm font-medium hover:brightness-105 transition-all shadow-gold-glow"
-            >
-              Apply
-            </button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
   )
 }

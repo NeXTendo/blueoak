@@ -1,12 +1,8 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { 
   Search, 
-  MoreVertical, 
-  CheckCircle2, 
   Plus,
-  Send,
-  Smile,
   Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,10 +21,10 @@ export default function MessagesPage() {
 
   const { data: conversations, isLoading } = useConversations()
 
-  const filteredConversations = conversations?.filter((c: any) => 
+  const filteredConversations = ((conversations as unknown as any[]) || []).filter((c: any) => 
     c.other_user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.property_title?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || []
+  )
 
   const handleSelectConversation = (id: string) => {
     if (window.innerWidth < 1024) {

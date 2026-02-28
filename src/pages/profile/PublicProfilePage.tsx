@@ -1,272 +1,352 @@
-import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useState, useMemo } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  MapPin, 
-  Mail, 
   MessageSquare, 
   Share2, 
-  Verified, 
+  ShieldCheck, 
   Building2, 
-  Users, 
-  Star 
+  Star,
+  Calendar,
+  ArrowRight,
+  Loader2,
+  Award,
+  Quote
 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { usePublicProfile, usePublicProperties, usePublicReviews } from '@/hooks/useProperties'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
-import { MOCK_PROPERTIES } from '@/lib/mock-data'
 import PropertyCard from '@/components/property/PropertyCard'
 import Container from '@/components/layout/Container'
 import { ROUTES } from '@/lib/constants'
-import type { Database } from '@/types/supabase'
-
-type Profile = Database['public']['Tables']['profiles']['Row']
+import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 export default function PublicProfilePage() {
   const { username } = useParams<{ username: string }>()
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [properties, setProperties] = useState(MOCK_PROPERTIES.slice(0, 4)) // Mock properties for now
+  const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState<'listings' | 'reviews'>('listings')
 
-  useEffect(() => {
-    async function getProfile() {
-      try {
-        setLoading(true)
-        // In a real app, we'd fetch by username. For now, we'll try to find a profile.
-        // If username is actually an ID (common in early impl), use that.
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .or(`username.eq.${username},id.eq.${username}`)
-          .single()
+  const { data: profile, isLoading: isLoadingProfile } = usePublicProfile(username || '')
+  const { data: properties = [], isLoading: isLoadingProps } = usePublicProperties(profile?.id || '')
+  const { data: reviews = [], isLoading: isLoadingReviews } = usePublicReviews(profile?.id || '')
 
-        if (error) throw error
-        setProfile(data)
-        
-        // Fetch properties for this seller
-        const { data: propsData } = await supabase
-          .from('properties')
-          .select('*')
-          .eq('seller_id', (data as Profile).id)
-          .limit(10)
-        
-        if (propsData && propsData.length > 0) {
-          setProperties(propsData as any)
-        }
-      } catch (error) {
-        console.error('Error fetching public profile:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
+  const stats = useMemo(() => [
+    { label: 'Market Assets', value: properties.length, icon: Building2 },
+    { label: 'Vouched Rate', value: reviews.length > 0 ? (reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / reviews.length).toFixed(1) : '5.0', icon: Star },
+    { label: 'Member Since', value: profile?.created_at ? new Date(profile.created_at).getFullYear() : '2024', icon: Calendar },
+  ], [properties.length, reviews, profile?.created_at])
 
-    if (username) getProfile()
-  }, [username])
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href)
+    toast.success('Identity Link Copied', {
+      description: 'The public profile URL has been saved to your clipboard.',
+    })
+  }
 
-  if (loading) return <ProfileSkeleton />
+  if (isLoadingProfile) return <ProfileLoading />
   if (!profile) return <ProfileNotFound />
 
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-32">
-      {/* Dynamic Cover Section */}
-      <section className="relative h-80 w-full overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-background/20 z-10" />
-        <img 
-          src={profile.cover_url || "https://images.unsplash.com/photo-1626178732047-3965d83653d1?q=80&w=2070"} 
-          alt="Cover"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute top-6 right-8 z-20 flex gap-2">
-           <Button variant="secondary" size="icon" className="h-10 w-10 rounded-xl backdrop-blur-md bg-white/10 border-white/20 text-white hover:bg-white/20 transition-all">
-              <Share2 size={18} />
+    <div className="flex flex-col min-h-screen bg-background pb-40">
+      {/* Cinematic Identity Cover */}
+      <section className="relative h-[30vh] md:h-[45vh] bg-black overflow-hidden">
+        <div className="absolute inset-0 opacity-60">
+           {profile.cover_url ? (
+             <img src={profile.cover_url} alt="" className="w-full h-full object-cover grayscale-[0.2]" />
+           ) : (
+             <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-900 to-black" />
+           )}
+           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+        </div>
+        
+        <div className="absolute top-10 right-10 z-20 flex gap-4">
+           <Button 
+            variant="secondary" 
+            size="icon" 
+            onClick={handleShare}
+            title="Share Identity"
+            className="h-14 w-14 rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all shadow-2xl"
+           >
+              <Share2 size={20} />
            </Button>
         </div>
+
+        {/* Floating Accents */}
+        <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-[hsl(var(--gold)/0.05)] rounded-full blur-[150px] -translate-y-1/2" />
       </section>
 
-      <Container className="-mt-20 relative z-20">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Left Column: Identity Token */}
-          <div className="lg:col-span-1 space-y-8">
-            <div className="p-8 bg-background border border-secondary/50 rounded-[2.5rem] shadow-premium space-y-6">
-              <div className="flex flex-col items-center text-center space-y-4">
-                <Avatar className="h-32 w-32 border-4 border-background shadow-2xl scale-110">
-                  <AvatarImage src={profile.avatar_url || ''} />
-                  <AvatarFallback className="text-4xl font-black">{profile.full_name?.charAt(0)}</AvatarFallback>
-                </Avatar>
-                
-                <div className="space-y-1">
-                  <div className="flex items-center justify-center gap-2">
-                    <h1 className="text-2xl font-black tracking-tight">{profile.full_name}</h1>
-                    {profile.is_verified && <Verified className="text-primary h-5 w-5" />}
+      <Container className="-mt-32 relative z-10 px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-12 lg:gap-20">
+          
+          {/* Physical Identity Column */}
+          <motion.aside 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-10"
+          >
+            {/* Identity Token */}
+            <div className="bg-background border border-border/60 rounded-[3rem] p-10 shadow-premium relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-[hsl(var(--gold)/0.03)] rounded-bl-[8rem] -translate-y-6 translate-x-6" />
+              
+              <div className="flex flex-col items-center text-center space-y-8 relative z-10">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-[hsl(var(--gold))] rounded-full blur-2xl opacity-10" />
+                  <Avatar className="h-40 w-40 ring-1 ring-border shadow-2xl relative z-10">
+                    <AvatarImage src={profile.avatar_url || ""} className="object-cover" />
+                    <AvatarFallback className="text-5xl font-black bg-secondary text-[hsl(var(--gold))] uppercase">
+                      {profile.full_name?.charAt(0) || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+
+                <div className="space-y-4 w-full">
+                  <div className="space-y-1">
+                    <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter leading-none">{profile.full_name || 'Anonymous Participant'}</h1>
+                    <p className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest flex items-center justify-center gap-1.5">
+                       Verified Market Presence
+                       <ShieldCheck size={12} className="text-emerald-500" />
+                    </p>
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40 italic">
-                    {profile.user_type} • Authorized Member
-                  </p>
+                  
+                  <div className="flex items-center justify-center gap-3">
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[hsl(var(--gold))] px-5 py-2 bg-secondary/40 rounded-full border border-border/20">
+                      {profile.user_type || 'Buyer'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="w-full space-y-6 pt-4 text-left border-t border-border/40 mt-4">
+                  <div className="space-y-1">
+                     <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/30 italic">Biographical Records</p>
+                     <p className="text-sm font-medium text-muted-foreground leading-relaxed italic">
+                        {profile.bio || "No public identity narrative established. This participant maintains a discreet market presence."}
+                     </p>
+                  </div>
+                </div>
+
+                <div className="w-full pt-8 flex flex-col gap-4">
+                  <Button 
+                    className="h-16 rounded-2xl bg-black text-white hover:bg-[hsl(var(--gold))] hover:text-black transition-all gap-3 group shadow-xl"
+                    onClick={() => navigate(ROUTES.MESSAGES + `?user=${profile.id}`)}
+                  >
+                    <MessageSquare size={18} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Enact Communication</span>
+                  </Button>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <Button variant="outline" className="h-14 rounded-xl border-border/60 text-[9px] font-black uppercase tracking-widest hover:border-[hsl(var(--gold))] hover:bg-secondary/20 transition-all">
+                       Email
+                    </Button>
+                    <Button variant="outline" className="h-14 rounded-xl border-border/60 text-[9px] font-black uppercase tracking-widest hover:border-[hsl(var(--gold))] hover:bg-secondary/20 transition-all">
+                       Phone
+                    </Button>
+                  </div>
                 </div>
               </div>
-
-              <div className="flex items-center justify-center gap-6 py-2">
-                 <div className="text-center">
-                    <div className="text-lg font-black tracking-tight">{profile.listing_count || properties.length}</div>
-                    <div className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/40">Listings</div>
-                 </div>
-                 <Separator orientation="vertical" className="h-8 bg-secondary" />
-                 <div className="text-center">
-                    <div className="text-lg font-black tracking-tight">{profile.rating || '4.9'}</div>
-                    <div className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/40">Rating</div>
-                 </div>
-                 <Separator orientation="vertical" className="h-8 bg-secondary" />
-                 <div className="text-center">
-                    <div className="text-lg font-black tracking-tight">34</div>
-                    <div className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/40">Reviews</div>
-                 </div>
-              </div>
-
-              <div className="space-y-3 pt-4">
-                 <Button className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20 gap-3 group">
-                    <MessageSquare size={16} className="group-hover:scale-110 transition-transform" />
-                    Secure Message
-                 </Button>
-                 <Button variant="secondary" className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-xs gap-3">
-                    <Mail size={16} />
-                    Direct Inquiry
-                 </Button>
-              </div>
             </div>
 
-            {/* Quick Stats Cabinet */}
-            <div className="p-8 bg-secondary/20 rounded-[2.5rem] space-y-6">
-               <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 italic">Authorized Credentials</h3>
-               <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                     <div className="h-10 w-10 rounded-xl bg-background flex items-center justify-center text-primary shadow-sm">
-                        <MapPin size={18} />
-                     </div>
-                     <div className="space-y-0.5">
-                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/40">Primary Location</p>
-                        <p className="text-xs font-bold">{profile.city || 'Lusaka'}, {profile.country || 'Zambia'}</p>
-                     </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                     <div className="h-10 w-10 rounded-xl bg-background flex items-center justify-center text-primary shadow-sm">
-                        <Building2 size={18} />
-                     </div>
-                     <div className="space-y-0.5">
-                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/40">Active Managed</p>
-                        <p className="text-xs font-bold">{profile.listing_count || 12} Assets in Portfolio</p>
-                     </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                     <div className="h-10 w-10 rounded-xl bg-background flex items-center justify-center text-primary shadow-sm">
-                        <Users size={18} />
-                     </div>
-                     <div className="space-y-0.5">
-                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/40">Client Network</p>
-                        <p className="text-xs font-bold">850+ Verified connections</p>
-                     </div>
-                  </div>
-               </div>
-            </div>
-          </div>
-
-          {/* Right Column: Portfolio & Intelligence */}
-          <div className="lg:col-span-2 space-y-12">
-            <div className="space-y-6">
-               <h2 className="text-3xl font-black uppercase tracking-tight text-primary">Biographical Data</h2>
-               <p className="text-muted-foreground font-medium leading-relaxed max-w-2xl text-lg">
-                  {profile.bio || "No biographical information has been provided for this profile identity. This member is currently transitioning to our premium tier access."}
-               </p>
-            </div>
-
-            <Separator className="bg-secondary/50" />
-
-            {/* Managed Assets Grid */}
-            <div className="space-y-10">
-               <div className="flex items-end justify-between">
-                  <div className="space-y-2">
-                     <div className="flex items-center gap-2">
-                        <div className="h-1 w-1 rounded-full bg-primary" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Portfolio</span>
-                     </div>
-                     <h2 className="text-4xl font-black uppercase tracking-tight">Active Listings</h2>
-                  </div>
-                  <Button variant="link" className="font-black text-[10px] uppercase tracking-[0.4em] text-muted-foreground hover:text-primary transition-all">
-                     View All Discovery
-                  </Button>
-               </div>
-
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                  {properties.map((property) => (
-                    <PropertyCard key={property.id} property={property as any} />
-                  ))}
-               </div>
-               
-               {properties.length === 0 && (
-                 <div className="py-20 text-center bg-secondary/10 rounded-[2.5rem] border-2 border-dashed border-secondary">
-                    <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px]">No active listings found in this repository.</p>
-                 </div>
-               )}
-            </div>
-
-            {/* Testimonials Hub */}
-            <div className="space-y-10">
-               <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                     <div className="h-1 w-1 rounded-full bg-primary" />
-                     <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Reputation</span>
-                  </div>
-                  <h2 className="text-4xl font-black uppercase tracking-tight">Vouched Testimony</h2>
-               </div>
-
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {[
-                    { name: 'Michael C.', rating: 5, text: 'Exceptional service and deep market intelligence. Truly a premium experience.' },
-                    { name: 'Elena R.', rating: 5, text: 'The verification process gave me total peace of mind. Highly professional.' }
-                  ].map((review, i) => (
-                    <div key={i} className="p-8 bg-secondary/10 rounded-3xl space-y-4 border border-border/5">
-                       <div className="flex gap-1">
-                          {[...Array(review.rating)].map((_, i) => <Star key={i} size={12} className="fill-primary text-primary" />)}
+            {/* Verification Stats */}
+            <div className="grid grid-cols-1 gap-6">
+               {stats.map((stat, i) => (
+                 <div key={i} className="p-8 bg-secondary/10 border border-border/40 rounded-[2rem] flex items-center justify-between group hover:bg-secondary/20 transition-all">
+                    <div className="flex items-center gap-5">
+                       <div className="h-12 w-12 rounded-xl bg-background border border-border/60 flex items-center justify-center text-muted-foreground/40 group-hover:text-[hsl(var(--gold))] transition-all shadow-sm">
+                          <stat.icon size={20} />
                        </div>
-                       <p className="text-sm font-medium text-foreground/80 italic">"{review.text}"</p>
-                       <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">{review.name} • Verified Transaction</div>
+                       <div className="space-y-0.5">
+                          <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/30">{stat.label}</p>
+                          <p className="text-lg font-black uppercase tracking-tighter">{stat.value}</p>
+                       </div>
                     </div>
-                  ))}
-               </div>
+                    <ArrowRight size={14} className="text-muted-foreground/20 group-hover:translate-x-1 group-hover:text-[hsl(var(--gold))] transition-all" />
+                 </div>
+               ))}
             </div>
-          </div>
+          </motion.aside>
+
+          {/* Market Activity Area */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-16"
+          >
+            {/* Tab Navigation */}
+            <div className="flex items-center gap-12 md:gap-20 border-b border-border/40 overflow-x-auto no-scrollbar">
+              {['listings', 'reviews'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab as any)}
+                  className={cn(
+                    "text-[10px] font-black uppercase tracking-[0.45em] py-8 border-b-2 transition-all relative whitespace-nowrap",
+                    activeTab === tab 
+                      ? "text-foreground border-foreground" 
+                      : "text-muted-foreground/30 border-transparent hover:text-foreground/60"
+                  )}
+                >
+                  {tab === 'listings' ? 'Active Assets' : 'Vouched Testimony'}
+                  {activeTab === tab && (
+                    <motion.div 
+                      layoutId="activeTabUnderlinePublic" 
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-[hsl(var(--gold))]" 
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              >
+                {activeTab === 'listings' && (
+                  <div className="space-y-12">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                         <Building2 size={14} className="text-[hsl(var(--gold))]" />
+                         <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">Current Portfolio</span>
+                      </div>
+                      <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">Market Presence</h2>
+                    </div>
+
+                    {isLoadingProps ? (
+                      <div className="flex flex-col items-center justify-center py-32 space-y-6">
+                        <Loader2 className="h-12 w-12 animate-spin text-[hsl(var(--gold))]" />
+                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 italic">Syncing Records...</p>
+                      </div>
+                    ) : properties.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        {properties.map((p) => (
+                          <PropertyCard key={p.id} property={p as any} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-24 md:py-40 bg-secondary/10 rounded-[4rem] border-2 border-dashed border-border/40 flex flex-col items-center justify-center text-center space-y-8">
+                        <div className="h-24 w-24 rounded-full bg-secondary flex items-center justify-center text-muted-foreground/20">
+                           <Building2 size={40} />
+                        </div>
+                        <div className="space-y-3 max-w-sm">
+                          <h4 className="text-2xl font-black uppercase tracking-tight">Archives Empty</h4>
+                          <p className="text-xs font-medium text-muted-foreground/60 leading-relaxed italic">No active assets are currently registered to this participant's identity.</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'reviews' && (
+                  <div className="space-y-12">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                         <Star size={14} className="text-[hsl(var(--gold))]" />
+                         <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">Participant Trust</span>
+                      </div>
+                      <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">Vouched Status</h2>
+                    </div>
+
+                    {isLoadingReviews ? (
+                      <div className="flex flex-col items-center justify-center py-32 space-y-6">
+                        <Loader2 className="h-12 w-12 animate-spin text-[hsl(var(--gold))]" />
+                         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 italic">Verifying Testimony...</p>
+                      </div>
+                    ) : reviews.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-10">
+                        {reviews.map((review: any) => (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            key={review.id} 
+                            className="bg-background border border-border/60 rounded-[3rem] p-10 md:p-14 space-y-8 relative group hover:border-[hsl(var(--gold))] transition-all"
+                          >
+                            <Quote className="absolute top-10 right-10 h-16 w-16 text-secondary/40 group-hover:text-[hsl(var(--gold)/0.1)] transition-all" />
+                            
+                            <div className="flex items-center gap-6">
+                              <Avatar className="h-16 w-16 border-2 border-background shadow-xl">
+                                <AvatarImage src={review.profiles?.avatar_url} />
+                                <AvatarFallback className="font-black">{(review.profiles?.full_name || 'U').charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <h4 className="text-lg font-black uppercase tracking-tight">{review.profiles?.full_name}</h4>
+                                <div className="flex items-center gap-2 mt-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star 
+                                      key={i} 
+                                      size={12} 
+                                      className={cn(i < review.rating ? "fill-[hsl(var(--gold))] text-[hsl(var(--gold))]" : "text-muted-foreground/20")} 
+                                    />
+                                  ))}
+                                  <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/40 ml-2 italic">Institutional Review</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <p className="text-xl md:text-2xl text-foreground font-medium leading-relaxed italic relative z-10">
+                              "{review.comment}"
+                            </p>
+                            
+                            <div className="flex items-center justify-between pt-4 border-t border-border/40">
+                               <span className="text-[9px] font-bold text-muted-foreground/30 uppercase tracking-widest">Logged {new Date(review.created_at).toLocaleDateString()}</span>
+                               <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[hsl(var(--gold))]">Verified Narrative</span>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-24 md:py-40 bg-secondary/10 rounded-[4rem] border-2 border-dashed border-border/40 flex flex-col items-center justify-center text-center space-y-8">
+                        <div className="h-24 w-24 rounded-full bg-secondary flex items-center justify-center text-muted-foreground/20">
+                           <Award size={40} />
+                        </div>
+                        <div className="space-y-3 max-w-sm">
+                          <h4 className="text-2xl font-black uppercase tracking-tight">Pure Reputation</h4>
+                          <p className="text-xs font-medium text-muted-foreground/60 leading-relaxed italic">This participant has no recorded testimonials. This typically indicates a clinical market presence.</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
         </div>
       </Container>
     </div>
   )
 }
 
-function ProfileSkeleton() {
+function ProfileLoading() {
   return (
-    <Container className="py-20 space-y-12">
-      <div className="h-80 w-full bg-secondary/20 rounded-[2.5rem] animate-pulse" />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        <Skeleton className="h-[600px] rounded-[2.5rem]" />
-        <div className="lg:col-span-2 space-y-12">
-          <Skeleton className="h-40 rounded-[2.5rem]" />
-          <Skeleton className="h-[400px] rounded-[2.5rem]" />
-        </div>
-      </div>
-    </Container>
+    <div className="flex flex-col min-h-screen bg-background p-20 items-center justify-center space-y-8">
+       <div className="relative">
+          <Loader2 className="h-20 w-20 animate-spin text-[hsl(var(--gold))]" />
+          <div className="absolute inset-0 bg-[hsl(var(--gold))] blur-[60px] opacity-20" />
+       </div>
+       <p className="text-[12px] font-black uppercase tracking-[1em] text-muted-foreground/40 animate-pulse ml-4">Decrypting Identity...</p>
+    </div>
   )
 }
 
 function ProfileNotFound() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-6">
-       <div className="text-6xl">🕵️‍♂️</div>
-       <div className="space-y-2">
-          <h2 className="text-3xl font-black tracking-tight">Identity Not Found</h2>
-          <p className="text-muted-foreground font-medium">The profile identity you are searching for does not exist in our global registry.</p>
+    <div className="flex flex-col min-h-screen bg-background items-center justify-center text-center p-10">
+       <div className="space-y-6 max-w-lg">
+          <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter text-muted-foreground/10 select-none">Void Access</h1>
+          <div className="space-y-3">
+            <h2 className="text-3xl font-black uppercase tracking-tight">Identity Record Missing</h2>
+            <p className="text-xs font-medium text-muted-foreground leading-relaxed italic">The requested market participant does not exist in our institutional repository. Verify the identity link and return to market discovery.</p>
+          </div>
+          <Link 
+            to={ROUTES.SEARCH}
+            className="inline-flex h-16 px-12 bg-black text-white rounded-2xl items-center justify-center text-[10px] font-black uppercase tracking-widest hover:bg-[hsl(var(--gold))] hover:text-black transition-all shadow-2xl"
+          >
+            Return to Discovery
+          </Link>
        </div>
-       <Button asChild className="h-14 px-10 rounded-2xl font-black uppercase tracking-widest text-xs">
-          <Link to={ROUTES.HOME}>Return to Intelligence Hub</Link>
-       </Button>
     </div>
   )
 }

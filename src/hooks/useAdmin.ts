@@ -206,9 +206,40 @@ export function useAdminActions() {
     onError: (err: any) => toast.error(`Error: ${err.message}`)
   })
 
+  const featureProperty = useMutation({
+    mutationFn: async ({ id, status }: { id: string, status: boolean }) => {
+      const { error } = await (supabase as any).rpc('admin_feature_property', { 
+        p_property_id: id, 
+        p_status: status 
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin'] })
+      toast.success('Property featured status updated')
+    },
+    onError: (err: any) => toast.error(`Error: ${err.message}`)
+  })
+
+  const deleteProperty = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any).rpc('admin_delete_property', { 
+        p_property_id: id
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin'] })
+      toast.success('Property deleted permanently')
+    },
+    onError: (err: any) => toast.error(`Error: ${err.message}`)
+  })
+
   return {
     approveProperty,
     rejectProperty,
+    featureProperty,
+    deleteProperty,
     toggleVerification,
     updateRole,
     toggleBan

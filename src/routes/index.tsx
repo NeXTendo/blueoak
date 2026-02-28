@@ -37,6 +37,7 @@ const ProfilePage           = lazy(() => import('@/pages/profile/ProfilePage'))
 const PublicProfilePage     = lazy(() => import('@/pages/profile/PublicProfilePage'))
 const EditProfilePage       = lazy(() => import('@/pages/profile/EditProfilePage'))
 const SettingsPage          = lazy(() => import('@/pages/profile/SettingsPage'))
+const ElevationPage         = lazy(() => import('@/pages/profile/ElevationPage'))
 const PropertyDetailPage    = lazy(() => import('@/pages/property/PropertyDetailPage'))
 const AddPropertyPage       = lazy(() => import('@/pages/property/AddPropertyPage'))
 const EditPropertyPage      = lazy(() => import('@/pages/property/EditPropertyPage'))
@@ -77,6 +78,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.PROFILE,         element: <ProtectedRoute>{L(ProfilePage)}</ProtectedRoute> },
       { path: ROUTES.EDIT_PROFILE,    element: <ProtectedRoute>{L(EditProfilePage)}</ProtectedRoute> },
       { path: ROUTES.SETTINGS,        element: <ProtectedRoute>{L(SettingsPage)}</ProtectedRoute> },
+      { path: ROUTES.ELEVATION,       element: <ProtectedRoute>{L(ElevationPage)}</ProtectedRoute> },
       { path: `${ROUTES.PROFILE}/:username`,  element: L(PublicProfilePage) },
       { path: ROUTES.PROPERTY_DETAIL, element: L(PropertyDetailPage) },
       { path: ROUTES.ADD_PROPERTY,    element: <ProtectedRoute><RoleRoute roles={['seller','agent','admin','super_admin']}>{L(AddPropertyPage)}</RoleRoute></ProtectedRoute> },

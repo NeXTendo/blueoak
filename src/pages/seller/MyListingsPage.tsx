@@ -23,7 +23,6 @@ import {
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
 import Container from '@/components/layout/Container'
-import { MOCK_PROPERTIES } from '@/lib/mock-data'
 import { Link } from 'react-router-dom'
 import { ROUTES } from '@/lib/constants'
 
@@ -31,14 +30,17 @@ export default function MyListingsPage() {
   const [activeTab, setActiveTab] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
 
-  const listings = MOCK_PROPERTIES.slice(0, 6).map((p, i) => ({
+  const listings = [
+    { id: '1', title: 'Luxury Villa', image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1000&auto=format&fit=crop', type: 'House', location: 'Lusaka', price: '$1,200,000' },
+    { id: '2', title: 'Modern Apartment', image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=1000&auto=format&fit=crop', type: 'Apartment', location: 'Nairobi', price: '$450,000' }
+  ].map((p: any, i: number) => ({
     ...p,
     status: i % 3 === 0 ? 'published' : i % 3 === 1 ? 'pending' : 'draft',
     views: Math.floor(Math.random() * 500) + 100,
     inquiries: Math.floor(Math.random() * 20) + 5
   }))
 
-  const filteredListings = listings.filter(l => {
+  const filteredListings = listings.filter((l: any) => {
     const matchesSearch = l.title.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesTab = activeTab === 'all' || l.status === activeTab
     return matchesSearch && matchesTab
@@ -95,7 +97,7 @@ export default function MyListingsPage() {
           {/* Listings List */}
           <div className="space-y-4">
             {filteredListings.length > 0 ? (
-              filteredListings.map((listing) => (
+              filteredListings.map((listing: any) => (
                 <div key={listing.id} className="group p-4 bg-background border border-secondary/50 rounded-[2rem] hover:border-primary/30 transition-all duration-300 shadow-premium flex flex-col md:flex-row items-center gap-6">
                   {/* Image */}
                   <div className="h-28 w-44 rounded-2xl overflow-hidden shrink-0 border border-border/50">

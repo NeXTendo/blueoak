@@ -1,178 +1,229 @@
 import { 
-  Users, 
   Building2, 
-  AlertTriangle, 
-  TrendingUp,
+  Users, 
+  TrendingUp, 
+  AlertTriangle,
   ArrowUpRight,
-  Activity,
-  FileText,
-  UserCheck,
+  ArrowDownRight,
   Loader2,
-  DollarSign
+  Activity,
+  Calendar,
+  Layers
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import Container from '@/components/layout/Container'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { cn } from '@/lib/utils'
 import { useAdminStats } from '@/hooks/useAdmin'
+import AdminHeader from '@/components/admin/AdminHeader'
+import { motion } from 'framer-motion'
+import { cn } from '@/lib/utils'
 
 export default function AdminDashboardPage() {
   const { data: stats, isLoading } = useAdminStats()
 
-  const ADMIN_STATS = [
-    {
-      title: 'Total Users',
-      value: stats?.total_users || 0,
-      icon: Users,
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-500/10'
-    },
-    {
-      title: 'Active Assets',
-      value: stats?.active_properties || 0,
-      icon: Building2,
-      color: 'text-green-500',
-      bgColor: 'bg-green-500/10'
-    },
-    {
-      title: 'Open Reports',
-      value: stats?.open_reports || 0,
-      icon: AlertTriangle,
-      color: 'text-red-500',
-      bgColor: 'bg-red-500/10'
-    },
-    {
-      title: 'Revenue',
-      value: new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW' }).format(stats?.total_revenue || 0),
-      icon: DollarSign,
-      color: 'text-purple-500',
-      bgColor: 'bg-purple-500/10'
-    }
-  ]
-
-  const SYSTEM_HEALTH = [
-    { label: 'Cloud Database', status: 'stable', value: 99.9 },
-    { label: 'Auth Protocols', status: 'stable', value: 99.7 },
-    { label: 'Media Storage', status: 'stable', value: 98.4 },
-    { label: 'Email Dispatch', status: 'warning', value: 85.2 }
-  ]
-
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex flex-col min-h-screen bg-background">
+        <AdminHeader />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-[hsl(var(--gold))]" />
+        </div>
       </div>
     )
   }
 
-  return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <header className="border-b border-border/50 py-6 md:py-12 bg-primary/5">
-        <Container>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div className="space-y-2">
-               <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="rounded-full bg-primary/10 text-primary border-none font-black text-[9px] uppercase tracking-widest px-3">Overwatch</Badge>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">System v2.4.0</span>
-               </div>
-              <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter">Global Oversight</h1>
-              <p className="text-muted-foreground font-medium italic">Administrative control protocols and system metrics.</p>
-            </div>
-          </div>
-        </Container>
-      </header>
+  const statCards = [
+    {
+      title: 'Active Assets',
+      value: stats?.active_properties || 0,
+      icon: Building2,
+      trend: '+12%',
+      trendUp: true,
+      description: 'Live listings on platform'
+    },
+    {
+      title: 'Global Identities',
+      value: stats?.total_users || 0,
+      icon: Users,
+      trend: '+5%',
+      trendUp: true,
+      description: 'Registered platform users'
+    },
+    {
+      title: 'Total Revenue',
+      value: `K${(stats?.total_revenue || 0).toLocaleString()}`,
+      icon: TrendingUp,
+      trend: '+18%',
+      trendUp: true,
+      description: 'Gross transactional volume'
+    },
+    {
+      title: 'Incident Log',
+      value: stats?.open_reports || 0,
+      icon: AlertTriangle,
+      trend: '-2%',
+      trendUp: false,
+      description: 'Awaiting resolution'
+    }
+  ]
 
-      <main className="py-6 md:py-12">
-        <Container className="space-y-6 md:space-y-12">
-          {/* Admin Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-            {ADMIN_STATS.map((stat) => (
-              <Card key={stat.title} className="rounded-[1.5rem] md:rounded-[2.5rem] border border-secondary/50 shadow-premium overflow-hidden hover:border-primary/30 transition-all duration-500">
-                <CardContent className="p-6 md:p-8 space-y-4 md:space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className={cn("p-4 rounded-2xl", stat.bgColor)}>
-                      <stat.icon className={cn("h-6 w-6", stat.color)} />
+  return (
+    <div className="flex flex-col min-h-screen bg-background selection:bg-[hsl(var(--gold)/0.1)] selection:text-foreground">
+      <AdminHeader />
+      
+      <main className="flex-1 py-10">
+        <Container className="space-y-10">
+          <header className="flex flex-col gap-1">
+            <h1 className="text-3xl font-serif font-medium tracking-tight text-foreground">
+              Command Center
+            </h1>
+            <p className="text-sm text-muted-foreground font-medium">
+              Real-time platform intelligence and health metrics.
+            </p>
+          </header>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {statCards.map((stat, i) => (
+              <motion.div
+                key={stat.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <Card className="border border-border/60 shadow-sm hover:shadow-md transition-all duration-300 rounded-xl overflow-hidden group">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                    <CardTitle className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                      {stat.title}
+                    </CardTitle>
+                    <div className="h-8 w-8 rounded-lg bg-secondary/50 flex items-center justify-center group-hover:bg-[hsl(var(--gold)/0.1)] group-hover:text-[hsl(var(--gold))] transition-colors">
+                      <stat.icon size={16} />
                     </div>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{stat.title}</p>
-                    <h3 className="text-3xl font-black tracking-tighter">{stat.value}</h3>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-3xl font-serif font-medium tracking-tight">
+                        {stat.value}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "text-[10px] font-bold py-0.5 px-1.5 rounded flex items-center gap-1",
+                          stat.trendUp ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
+                        )}>
+                          {stat.trendUp ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
+                          {stat.trend}
+                        </span>
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">
+                          vs last month
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-             {/* System Health Panel */}
-             <div className="space-y-4 md:space-y-6">
-                <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-                   <Activity className="text-primary" size={24} />
-                   System Health
-                </h2>
-                <Card className="rounded-[2rem] md:rounded-[3rem] border border-secondary/50 p-6 md:p-10 space-y-6 md:space-y-8 shadow-premium">
-                   {SYSTEM_HEALTH.map((item) => (
-                     <div key={item.label} className="space-y-3">
-                        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                           <span className="text-muted-foreground">{item.label}</span>
-                           <span className={cn(item.status === 'stable' ? "text-green-500" : "text-amber-500")}>
-                              {item.value}%
-                           </span>
-                        </div>
-                        <Progress value={item.value} className="h-2 rounded-full bg-secondary/30" />
-                     </div>
-                   ))}
-                   <Button variant="outline" className="w-full h-12 rounded-xl border-2 font-black uppercase tracking-widest text-[10px] mt-4">
-                      Protocol Log
-                   </Button>
-                </Card>
-             </div>
-
-             {/* Recent Administrative Queue */}
-             <div className="lg:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
+            {/* System Wellness */}
+            <Card className="lg:col-span-2 border border-border/60 shadow-sm rounded-2xl overflow-hidden bg-white">
+              <CardHeader className="border-b border-border/40 pb-4">
                 <div className="flex items-center justify-between">
-                   <h2 className="text-2xl font-black uppercase tracking-tight">Active Queue Highlights</h2>
-                   <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" className="font-black uppercase tracking-widest text-[10px]">Registry</Button>
-                      <Button variant="ghost" size="sm" className="font-black uppercase tracking-widest text-[10px]">Assets</Button>
-                      <Button variant="ghost" size="sm" className="font-black uppercase tracking-widest text-[10px]">Reports</Button>
-                   </div>
+                  <div className="space-y-1">
+                    <CardTitle className="text-lg font-serif">System Wellness</CardTitle>
+                    <CardDescription className="text-xs font-medium uppercase tracking-widest">Global platform performance indexed</CardDescription>
+                  </div>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full p-0">
+                    <Activity size={16} className="text-[hsl(var(--gold))]" />
+                  </Button>
                 </div>
-                
-                <Card className="rounded-[3rem] border border-secondary/50 shadow-premium overflow-hidden">
-                   <div className="divide-y divide-border/50">
-                      {[
-                        { primary: 'Property Approval', secondary: `${stats?.pending_properties || 0} listings awaiting manual review and validation`, time: 'Action Required', icon: UserCheck, color: 'text-amber-500' },
-                        { primary: 'Security Incident', secondary: `${stats?.open_reports || 0} policy violations reported via platform oversight`, time: 'Priority', icon: AlertTriangle, color: 'text-red-500' },
-                        { primary: 'Financial Sync', secondary: 'Automated platform revenue and subscription integrity check', time: 'Healthy', icon: FileText, color: 'text-blue-500' },
-                        { primary: 'User Expansion', secondary: `${stats?.total_users || 0} unique identities currently registered on platform`, time: 'Growth', icon: TrendingUp, color: 'text-green-500' }
-                      ].map((item, i) => (
-                        <div key={i} className="p-6 flex items-center justify-between hover:bg-secondary/10 transition-colors group cursor-pointer">
-                           <div className="flex items-center gap-4 min-w-0">
-                              <div className={cn("p-3 rounded-xl bg-background border border-border/50 group-hover:border-primary/30 transition-all", item.color)}>
-                                 <item.icon size={20} />
-                              </div>
-                              <div className="min-w-0">
-                                 <h4 className="text-sm font-black uppercase tracking-tight truncate">{item.primary}</h4>
-                                 <p className="text-xs text-muted-foreground font-medium truncate">{item.secondary}</p>
-                              </div>
-                           </div>
-                           <div className="flex items-center gap-4 shrink-0 px-4">
-                              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">{item.time}</span>
-                              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl">
-                                 <ArrowUpRight size={18} />
-                               </Button>
-                           </div>
-                        </div>
-                      ))}
-                   </div>
-                </Card>
-             </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="p-8 space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-muted-foreground/60">
+                        <span>Database Load</span>
+                        <span className="text-foreground">24%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                        <div className="h-full bg-[hsl(var(--gold))] rounded-full w-[24%]" />
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-muted-foreground/60">
+                        <span>CDN Utilization</span>
+                        <span className="text-foreground">62%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                        <div className="h-full bg-[hsl(var(--gold))] rounded-full w-[62%]" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4 grid grid-cols-2 md:grid-cols-4 gap-6">
+                    {[
+                      { label: 'Uptime', val: '99.99%', icon: Activity },
+                      { label: 'Latency', val: '42ms', icon: Zap },
+                      { label: 'Backups', val: 'Active', icon: Layers },
+                      { label: 'Updates', val: 'Stable', icon: Calendar }
+                    ].map((m) => (
+                      <div key={m.label} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary/30 transition-colors hover:bg-secondary/50 group">
+                        <m.icon size={18} className="text-muted-foreground group-hover:text-[hsl(var(--gold))] transition-colors" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">{m.label}</span>
+                        <span className="text-sm font-semibold">{m.val}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card className="border border-border/60 shadow-sm rounded-2xl overflow-hidden bg-white">
+              <CardHeader className="border-b border-border/40 pb-4">
+                <CardTitle className="text-lg font-serif">Rapid Response</CardTitle>
+                <CardDescription className="text-xs font-medium uppercase tracking-widest">Core administrative triggers</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 gap-3">
+                  <Button className="w-full h-11 rounded-lg bg-[hsl(var(--gold))] text-white hover:bg-[hsl(var(--gold))]/90 font-bold uppercase tracking-widest text-[10px] shadow-sm">
+                    New Global Listing
+                  </Button>
+                  <Button variant="outline" className="w-full h-11 rounded-lg border-border font-bold uppercase tracking-widest text-[10px] hover:bg-secondary transition-all">
+                    Generate Report
+                  </Button>
+                  <Button variant="outline" className="w-full h-11 rounded-lg border-border font-bold uppercase tracking-widest text-[10px] hover:bg-secondary transition-all">
+                    System Audit
+                  </Button>
+                  <Button variant="ghost" className="w-full h-11 rounded-lg text-muted-foreground hover:text-foreground font-bold uppercase tracking-widest text-[10px]">
+                    Configure Toggles
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </Container>
       </main>
     </div>
+  )
+}
+
+function Zap(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 14.75 15.3 3 12 10.25h8L8.7 21 12 13.75H4z" />
+    </svg>
   )
 }

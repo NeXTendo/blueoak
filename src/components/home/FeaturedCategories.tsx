@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 
 interface CategoryCardProps {
   title: string
-  propertyCount: string
+  propertyCount: string | number
   image: string
   link: string
 }
@@ -19,25 +19,25 @@ function CategoryCard({ title, propertyCount, image, link }: CategoryCardProps) 
       <img 
         src={image} 
         alt={title} 
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110"
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 ease-out md:group-hover:scale-110"
       />
       
       {/* Heavy gradient overlay for better text readability and cinematic feel */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10 transition-opacity duration-500 group-hover:opacity-80" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10 transition-opacity duration-500 md:group-hover:opacity-80" />
 
       {/* Content */}
       <div className="absolute inset-0 p-8 flex flex-col justify-end">
-        <h3 className="font-serif text-3xl text-white font-medium mb-2 transform transition-transform duration-500 group-hover:-translate-y-2">
+        <h3 className="font-serif text-3xl text-white font-medium mb-2 transform transition-transform duration-500 md:group-hover:-translate-y-2">
           {title}
         </h3>
         
-        <div className="flex items-center justify-between text-white/70 overflow-hidden">
-          <span className="font-medium tracking-wide uppercase text-xs transform transition-transform duration-500 group-hover:-translate-y-2">
+        <div className="flex items-center justify-between text-white/70">
+          <span className="font-medium tracking-wide uppercase text-xs transform transition-transform duration-500 md:group-hover:-translate-y-2">
             {propertyCount} Properties
           </span>
           <ArrowRight 
             size={18} 
-            className="text-[hsl(var(--gold))] opacity-0 -translate-x-4 transition-all duration-500 group-hover:opacity-100 group-hover:translate-x-0 group-hover:-translate-y-2" 
+            className="text-[hsl(var(--gold))] opacity-0 -translate-x-4 transition-all duration-500 md:group-hover:opacity-100 md:group-hover:translate-x-0 md:group-hover:-translate-y-2" 
           />
         </div>
       </div>
@@ -64,25 +64,25 @@ export default function FeaturedCategories() {
       title: "Luxury Villas",
       propertyCount: isLoading ? "..." : (counts?.villas || "0"),
       image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1000&auto=format&fit=crop",
-      link: "/search?property_type=House&min_price=1000000"
+      link: "/search?property_type=villa"
     },
     {
       title: "Penthouses",
       propertyCount: isLoading ? "..." : (counts?.penthouses || "0"),
       image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=1000&auto=format&fit=crop",
-      link: "/search?property_type=Apartment&min_price=500000"
+      link: "/search?property_type=penthouse"
     },
     {
       title: "Student Living",
       propertyCount: isLoading ? "..." : (counts?.student_accommodation || "0"),
       image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop",
-      link: "/search?property_type=Student+Accommodation"
+      link: "/search?property_type=student_accom"
     },
     {
       title: "Prime Land",
       propertyCount: isLoading ? "..." : (counts?.land || "0"),
       image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1000&auto=format&fit=crop",
-      link: "/search?property_type=Land"
+      link: "/search?property_type=residential_plot"
     }
   ]
 

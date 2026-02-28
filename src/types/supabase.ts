@@ -30,6 +30,11 @@ export type Database = {
           response_time_hours: number | null
           push_token: string | null
           last_seen_at: string | null
+          email_notifications: boolean
+          push_notifications: boolean
+          message_notifications: boolean
+          dark_mode: boolean
+          status: 'active' | 'hibernated'
           created_at: string
           updated_at: string
         }

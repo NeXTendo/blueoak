@@ -23,6 +23,7 @@ export const ROUTES = {
   PUBLIC_PROFILE:     '/profile/:username',
   EDIT_PROFILE:       '/profile/edit',
   SETTINGS:           '/settings',
+  ELEVATION:          '/profile/elevation',
   PROPERTY_DETAIL:    '/property/:slug',
   ADD_PROPERTY:       '/property/new',
   EDIT_PROPERTY:      '/property/:id/edit',

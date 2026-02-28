@@ -126,10 +126,10 @@ export default function PropertyDetailPage() {
                 <ShieldCheck size={14} className="text-primary" />
                 {property.status === 'active' ? 'Verified Listing' : 'Verification Pending'}
               </span>
-              {property.solar_power && (
+              {property.has_solar && (
                 <>
                   <span className="flex items-center gap-1">•</span>
-                  <span className="flex items-center gap-1 text-yellow-600">
+                  <span className="flex items-center gap-1 text-[hsl(var(--gold))]">
                     <Sun size={14} />
                     Solar Powered
                   </span>
@@ -251,7 +251,7 @@ export default function PropertyDetailPage() {
               <div className="space-y-6">
                 <h3 className="text-xl font-bold">Technical Infrastructure</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {property.borehole && (
+                  {property.has_borehole && (
                     <div className="flex items-center gap-4 p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl">
                       <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
                         <Droplets size={20} />
@@ -262,18 +262,18 @@ export default function PropertyDetailPage() {
                       </div>
                     </div>
                   )}
-                  {property.solar_power && (
+                  {property.has_solar && (
                     <div className="flex items-center gap-4 p-4 bg-yellow-500/5 border border-yellow-500/10 rounded-2xl">
                       <div className="h-10 w-10 rounded-xl bg-yellow-500/10 flex items-center justify-center text-yellow-600">
                         <Sun size={20} />
                       </div>
                       <div>
                         <div className="text-xs font-black uppercase tracking-widest text-yellow-600/60">Solar Power System</div>
-                        <div className="font-bold">{property.solar_panel_capacity ? `${property.solar_panel_capacity}kW Output` : 'Full System'}</div>
+                        <div className="font-bold">{property.solar_capacity ? `${property.solar_capacity}kW Output` : 'Full System'}</div>
                       </div>
                     </div>
                   )}
-                  {property.generator && (
+                  {property.has_generator && (
                     <div className="flex items-center gap-4 p-4 bg-orange-500/5 border border-orange-500/10 rounded-2xl">
                       <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-600">
                         <Zap size={20} />
@@ -284,7 +284,7 @@ export default function PropertyDetailPage() {
                       </div>
                     </div>
                   )}
-                  {property.staff_quarters && (
+                  {property.has_staff_quarters && (
                     <div className="flex items-center gap-4 p-4 bg-green-500/5 border border-green-500/10 rounded-2xl">
                       <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-600">
                         <Home size={20} />
@@ -295,7 +295,7 @@ export default function PropertyDetailPage() {
                       </div>
                     </div>
                   )}
-                  {!property.borehole && !property.solar_power && !property.generator && !property.staff_quarters && (
+                  {!property.has_borehole && !property.has_solar && !property.has_generator && !property.has_staff_quarters && (
                     <div className="col-span-2 text-sm text-muted-foreground italic">
                       No additional technical infrastructure specified.
                     </div>

@@ -23,10 +23,11 @@ export default function ConversationPage() {
   const [messageText, setMessageText] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  const { data: conversations } = useConversations()
+  const { data: conversationsRaw } = useConversations()
+  const conversations = (conversationsRaw as unknown as any[]) || []
   const { messages, isLoading, sendMessage } = useChat(conversationId)
 
-  const conversation = conversations?.find((c: any) => c.id === conversationId)
+  const conversation = conversations.find((c: any) => c.id === conversationId)
   const { data: property } = useProperty(conversation?.property_id || '')
 
   useEffect(() => {

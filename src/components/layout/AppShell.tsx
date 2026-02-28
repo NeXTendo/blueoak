@@ -44,6 +44,7 @@ export default function AppShell({ children }: Props) {
 
   // Show nav on all pages except auth/onboarding pages and conversation views
   const isConversationPage = location.pathname.startsWith('/messages/') && location.pathname !== '/messages'
+  const isAdminPage = location.pathname.startsWith('/admin') || location.pathname.startsWith('/super-admin')
   const showNav = !NO_NAV_ROUTES.includes(location.pathname as typeof ROUTES.SPLASH) && !isConversationPage
   
   // Show header and footer only on homepage
@@ -55,13 +56,13 @@ export default function AppShell({ children }: Props) {
         "flex-1 min-w-0 flex flex-col",
         showNav && isMobile ? 'pb-[3.75rem]' : ''
       )}>
-        {showNav && (!isMobile || isHomePage) && <TopHeader />}
+        {showNav && !isAdminPage && (!isMobile || isHomePage) && <TopHeader />}
 
         <div className="flex-1 relative">
           {children}
         </div>
 
-        {showNav && !isMobile && <Footer />}
+        {showNav && !isAdminPage && !isMobile && <Footer />}
       </main>
 
       {showNav && isMobile && <BottomNav />}

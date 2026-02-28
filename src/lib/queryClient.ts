@@ -3,14 +3,16 @@ import { QueryClient } from '@tanstack/react-query'
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,       // 5 minutes
-      gcTime:    1000 * 60 * 10,       // 10 minutes
+      // Property listings change infrequently — cache aggressively
+      staleTime: 1000 * 60 * 15,      // 15 minutes stale
+      gcTime:    1000 * 60 * 30,       // 30 minutes garbage collect
       retry: (failureCount, error) => {
-        // Don't retry on 4xx errors
-        if (error instanceof Error && error.message.includes('4')) return false
+        // Don't retry on 4xx client errors
+        if (error instanceof Error && /\b4\d{2}\b/.test(error.message)) return false
         return failureCount < 2
       },
       refetchOnWindowFocus: false,
+      refetchOnReconnect: true,        // Re-sync after coming back online
     },
     mutations: {
       onError: (error) => {
@@ -19,3 +21,4 @@ export const queryClient = new QueryClient({
     },
   },
 })
+
