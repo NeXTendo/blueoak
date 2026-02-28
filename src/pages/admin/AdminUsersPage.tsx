@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { 
-  Users, 
   Search, 
   MoreHorizontal,
   ShieldCheck,
@@ -10,7 +9,6 @@ import {
   Shield,
   Loader2,
   Mail,
-  MoreVertical,
   Fingerprint
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -39,7 +37,6 @@ import { useAdminUsers, useAdminActions } from '@/hooks/useAdmin'
 import { useRole } from '@/hooks/useRole'
 import AdminHeader from '@/components/admin/AdminHeader'
 import EmptyState from '@/components/common/EmptyState'
-import { motion } from 'framer-motion'
 
 export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState('')

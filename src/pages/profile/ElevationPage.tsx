@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import { 
   ShieldCheck, 
   Building2, 
-  ArrowRight, 
   ArrowLeft,
   CheckCircle2,
   FileText,
