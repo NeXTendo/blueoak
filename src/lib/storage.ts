@@ -18,10 +18,13 @@ export async function uploadFile(
   folder: string
 ): Promise<{ path: string; url: string; error?: string }> {
   try {
+    console.log(`[Storage] Starting upload flow for ${file.name} to bucket ${bucket}...`)
     const ext  = file.name.split('.').pop() ?? 'bin'
     const uniqueId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(7)
     const path = `${folder}/${uniqueId}.${ext}`
 
+    console.log(`[Storage] Target path: ${path}. Initiating supabase.storage.upload...`)
+    
     // 30 second timeout to prevent infinite hang
     const uploadPromise = supabase.storage.from(bucket).upload(path, file, {
       cacheControl: '3600',
@@ -29,19 +32,25 @@ export async function uploadFile(
     })
 
     const timeoutPromise = new Promise<{ data: any, error: any }>((_, reject) => 
-      setTimeout(() => reject(new Error('Upload timed out after 30 seconds')), 30000)
+      setTimeout(() => {
+        console.warn(`[Storage] Upload timeout triggered for ${file.name}`)
+        reject(new Error('Upload timed out after 30 seconds'))
+      }, 30000)
     )
 
-    const { error } = await Promise.race([uploadPromise, timeoutPromise])
+    console.log(`[Storage] Racing upload vs timeout for ${file.name}...`)
+    const raceResult = await Promise.race([uploadPromise, timeoutPromise]) as any
+    const { error } = raceResult || {}
 
     if (error) {
-       console.error(`[Storage] Upload failed for ${file.name}:`, error)
+       console.error(`[Storage] Upload error returned for ${file.name}:`, error)
        return { path: '', url: '', error: error.message || 'Unknown upload error' }
     }
     
+    console.log(`[Storage] Upload succeeded for ${file.name}. Generating public URL...`)
     return { path, url: getPublicUrl(bucket, path) }
   } catch (err: any) {
-    console.error(`[Storage] Exception during upload for ${file.name}:`, err)
+    console.error(`[Storage] Exception caught during upload for ${file.name}:`, err)
     return { path: '', url: '', error: err.message || 'Upload exception occurred' }
   }
 }

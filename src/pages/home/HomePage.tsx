@@ -129,22 +129,22 @@ export default function HomePage() {
               </div>
 
               {/* Headline */}
-              <h1 className="font-serif text-white text-4xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tighter mb-8 drop-shadow-2xl">
+              <h1 className="font-serif text-white text-4xl md:text-4xl lg:text-5xl font-regular leading-[1.1] tracking-[-0.03em] mb-6 md:mb-8 drop-shadow-2xl">
                 Discover Extraordinary Properties in Zambia and across borders.
               </h1>
 
               {/* CTAs */}
-              <div className="flex flex-wrap items-center gap-4">
+              <div className="flex flex-wrap items-center gap-5">
                 <Link
                   to={heroProperties[currentHeroIndex]?.id ? `${ROUTES.PROPERTY_DETAIL}/${heroProperties[currentHeroIndex].id}` : ROUTES.SEARCH}
-                  className="je-btn-gold text-sm px-8 py-4 shadow-gold-glow"
+                  className="je-btn-gold text-sm px-5 py-3 shadow-gold-glow"
                 >
                   View Property
                   <ArrowRight size={15} />
                 </Link>
                 <Link
                   to={ROUTES.ADD_PROPERTY}
-                  className="flex items-center gap-2 px-8 py-4 border border-white/30 text-white/80 rounded-sm text-sm font-medium hover:bg-white/10 transition-colors"
+                  className="flex items-center gap-2 px-5 py-3 border border-white/30 text-white/80 rounded-sm text-sm font-medium hover:bg-white/10 transition-colors"
                 >
                   List with Us
                 </Link>
@@ -220,8 +220,8 @@ export default function HomePage() {
                 },
               ].map(({ value, label }) => (
                 <div key={label} className="flex-1 flex flex-col items-center px-4">
-                  <span className="font-serif text-white text-xl font-medium">{value}</span>
-                  <span className="text-white/40 text-[10px] uppercase tracking-[0.15em] mt-0.5 font-medium">{label}</span>
+                  <span className="font-serif text-white text-xl md:text-2xl font-semibold tracking-tight">{value}</span>
+                  <span className="text-white/60 text-[10px] uppercase tracking-[0.2em] mt-1 font-semibold">{label}</span>
                 </div>
               ))}
             </div>

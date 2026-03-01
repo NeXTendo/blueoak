@@ -19,26 +19,24 @@ export function useAuth() {
   const navigate = useNavigate()
 
   async function login({ email, password }: LoginFormData) {
-    console.log('[useAuth] signInWithPassword starting...')
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      console.error('[useAuth] signInWithPassword error:', error.message)
-      throw error
-    }
-    console.log('[useAuth] signInWithPassword succeeded, session:', !!data.session)
-    
-    // Sync store immediately to prevent redirect race conditions
-    setSession(data.session)
-    if (data.session) {
-      try {
-        console.log('[useAuth] Fetching profile for:', data.session.user.id)
-        await fetchProfile(data.session.user.id)
-        console.log('[useAuth] Profile fetched successfully')
-      } catch (err) {
-        console.error('[useAuth] Failed to pre-fetch profile during login:', err)
+    console.log(`[useAuth] signInWithPassword starting for ${email}...`)
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) {
+        console.error('[useAuth] signInWithPassword error:', error.message)
+        throw error
       }
+      console.log('[useAuth] signInWithPassword success. Session ID:', data.session?.user?.id)
+      
+      setSession(data.session)
+      if (data.session) {
+        await fetchProfile(data.session.user.id)
+      }
+      return data
+    } catch (err) {
+      console.error('[useAuth] Exception in login:', err)
+      throw err
     }
-    return data
   }
 
   async function loginWithGoogle() {
@@ -158,65 +156,90 @@ export function useAuthInit() {
 
   useEffect(() => {
     let mounted = true
+    let isDone = false
 
-    // Safety timeout: If auth takes more than 5s, mark as initialized anyway
-    // to prevent the app from being stuck on a global spinner.
-    const timeout = setTimeout(() => {
-      if (mounted) {
-        console.warn('Auth initialization timed out. Proceeding...');
-        setInitialized(true);
-      }
-    }, 5000);
-
-    async function init() {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!mounted) return
-        setSession(session)
-
-        if (session) {
-          try {
-            const { data } = await supabase.from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single()
-
-            if (mounted && data) setProfile(data)
-          } catch (profileErr) {
-            console.error('Failed to fetch profile during init:', profileErr)
-          }
-        }
-        
-        if (mounted) {
-          clearTimeout(timeout)
-          setInitialized(true)
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error)
-        if (mounted) {
-          clearTimeout(timeout)
-          setInitialized(true)
-        }
+    const finish = () => {
+      if (!isDone && mounted) {
+        isDone = true
+        setInitialized(true)
       }
     }
 
-    init()
+    // Safety timeout: Proceed after 3s no matter what
+    const timeout = setTimeout(() => {
+      if (!isDone) {
+        console.warn('[useAuth] Initialization timeout reached. Forcing ready state.')
+        finish()
+      }
+    }, 3000)
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
-        setSession(newSession)
-        if (newSession) {
-          const { data } = await supabase.from('profiles').select('*').eq('id', newSession.user.id).single()
-          setProfile(data)
+    async function handleAuthChange(event: any, session: any) {
+      console.log(`[useAuth] Event: ${event}. Session: ${!!session}`)
+      
+      if (mounted) {
+        setSession(session)
+        if (session) {
+          try {
+            const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
+            if (mounted && data) setProfile(data)
+          } catch (err) {
+            console.error('[useAuth] Profile fetch failed:', err)
+          }
         } else {
           setProfile(null)
+          if (event === 'SIGNED_OUT') {
+            useAuthStore.getState().clearAuth()
+          }
         }
       }
-    )
+
+      // INITIAL_SESSION or any session event satisfies initialization
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+         finish()
+      }
+    }
+
+    // 1. Set up listener FIRST to catch INITIAL_SESSION
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange)
+
+    // 2. Faster, non-blocking initial check
+    async function quickCheck() {
+      try {
+        console.log('[useAuth] init: Quick check start...')
+        // We use a small timeout for the direct call
+        const { data: { session }, error } = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<any>((_, reject) => setTimeout(() => reject(new Error('getSession timeout')), 2500))
+        ])
+        
+        if (error) {
+           console.error('[useAuth] getSession error:', error.message)
+           if (error.message.includes('refresh_token_not_found') || error.message.includes('invalid_grant')) {
+              console.warn('[useAuth] Invalid token detected. Clearing storage to unblock client.')
+              await supabase.auth.signOut({ scope: 'local' })
+           }
+        }
+
+        if (mounted && session) {
+          console.log('[useAuth] quickCheck found session. Forwarding to handleAuthChange.')
+          handleAuthChange('INITIAL_SESSION_QUICK', session)
+        }
+      } catch (err: any) {
+        console.warn(`[useAuth] Quick check bypassed/timed out: ${err.message}`)
+        // If it timed out, it might be due to a deadlock. 
+        // We don't sign out automatically here to avoid losing valid sessions,
+        // but the 'finish()' call in finally ensures the app doesn't hang.
+      } finally {
+        finish()
+      }
+    }
+
+    quickCheck()
 
     return () => {
       mounted = false
       subscription.unsubscribe()
+      clearTimeout(timeout)
     }
   }, [setSession, setProfile, setInitialized])
 }

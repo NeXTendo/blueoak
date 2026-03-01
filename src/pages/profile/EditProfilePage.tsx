@@ -19,6 +19,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useCurrencyStore, CurrencyCode } from '@/stores/currencyStore'
 import { ROUTES } from '@/lib/constants'
+import { uploadFile } from '@/lib/storage'
+import { toast } from 'sonner'
 import Container from '@/components/layout/Container'
 
 export default function EditProfilePage() {
@@ -56,22 +58,20 @@ export default function EditProfilePage() {
 
     setIsSaving(true)
     try {
-      const fileExt = file.name.split('.').pop()
-      const filePath = `${profile.id}/avatar-${Math.random().toString(36).substring(7)}.${fileExt}`
+      console.log(`[EditProfile] Starting avatar upload for ${profile.id}...`)
+      const result = await uploadFile('avatars', file, profile.id)
+      
+      if (result.error) {
+        throw new Error(result.error)
+      }
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file)
-
-      if (uploadError) throw uploadError
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath)
-
-      await updateProfile({ avatar_url: publicUrl })
-    } catch (error) {
+      console.log(`[EditProfile] Avatar uploaded. URL: ${result.url}`)
+      await updateProfile({ avatar_url: result.url })
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 2000)
+    } catch (error: any) {
       console.error('Avatar upload failed:', error)
+      toast.error(`Avatar upload failed: ${error.message}`)
     } finally {
       setIsSaving(false)
     }
