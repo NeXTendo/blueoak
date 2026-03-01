@@ -81,6 +81,12 @@ export interface PropertyWithSeller extends Property {
     full_name: string
     avatar_url: string | null
     is_verified: boolean
+    user_type: string
+    bio: string | null
+    listing_count?: number
+    created_at?: string
+    city?: string | null
+    country?: string | null
   }
   profiles?: {
     id: string
@@ -90,6 +96,10 @@ export interface PropertyWithSeller extends Property {
     is_verified: boolean
     user_type: string
     bio: string | null
+    listing_count?: number
+    created_at?: string
+    city?: string | null
+    country?: string | null
   }
   media?: Array<{ url: string; media_type?: 'image' | 'video'; order_index?: number }>
   is_saved?: boolean

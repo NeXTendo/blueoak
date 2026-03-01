@@ -56,10 +56,8 @@ export function useFormatPrice() {
 
     if (!value) return 'Contact for Price'
 
-    // Format the number 
-    const formattedNum = value >= 1_000_000 
-       ? `${(value / 1_000_000).toFixed(1)}M` 
-       : value.toLocaleString()
+    // Format the number to shows full value (e.g. 12,900,000)
+    const formattedNum = value.toLocaleString()
 
     return `${symbol} ${formattedNum}`
   }
@@ -87,11 +85,7 @@ export function useFormatPrice() {
       NGN: '₦', GHS: 'GH₵', EUR: '€', GBP: '£'
     }
     const symbol = symbols[currency] || currency
-    const formattedNum = value >= 1_000_000_000
-      ? `${(value / 1_000_000_000).toFixed(1)}B`
-      : value >= 1_000_000
-        ? `${(value / 1_000_000).toFixed(1)}M`
-        : value.toLocaleString()
+    const formattedNum = value.toLocaleString()
     
     return `${symbol}${formattedNum}`
   }

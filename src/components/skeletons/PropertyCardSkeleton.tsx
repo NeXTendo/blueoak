@@ -2,15 +2,15 @@ import { cn } from '@/lib/utils'
 const Bone = ({ className }: { className?: string }) => <div className={cn('animate-skeleton rounded-lg bg-muted', className)} />
 export function PropertyCardSkeleton() {
   return (
-    <div className="rounded-2xl overflow-hidden border bg-background shadow-card">
-      <Bone className="h-48 w-full rounded-none" />
-      <div className="p-3 space-y-2">
-        <Bone className="h-5 w-2/3" />
-        <Bone className="h-4 w-full" />
-        <div className="flex gap-2 pt-1">
-          <Bone className="h-6 w-16" />
-          <Bone className="h-6 w-16" />
-          <Bone className="h-6 w-16" />
+    <div className="rounded-none overflow-hidden border border-border bg-card">
+      <Bone className="aspect-[4/3] sm:aspect-[16/9] w-full rounded-none" />
+      <div className="p-4 sm:p-5 space-y-3">
+        <Bone className="h-5 w-3/4" />
+        <Bone className="h-4 w-1/2" />
+        <div className="flex gap-4 pt-2">
+          <Bone className="h-8 w-12" />
+          <Bone className="h-8 w-12" />
+          <Bone className="h-8 w-12" />
         </div>
       </div>
     </div>

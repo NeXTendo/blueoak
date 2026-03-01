@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, ReactNode } from 'react'
+import { useLocation, useNavigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useRole } from '@/hooks/useRole'
@@ -16,13 +16,16 @@ const NO_NAV_ROUTES = [
   ROUTES.VERIFY_EMAIL,
 ]
 
-interface Props { children: React.ReactNode }
-
-export default function AppShell({ children }: Props) {
+export default function AppShell({ children }: { children?: ReactNode }) {
   const location = useLocation()
   const navigate = useNavigate()
   const isMobile = useIsMobile()
   const { isAdmin } = useRole()
+
+  // Fix: Layout shifts and already-scrolled pages
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
 
   // Redirect admins away from standard pages
   const { session } = useAuthStore()
@@ -42,28 +45,30 @@ export default function AppShell({ children }: Props) {
     }
   }, [isAdmin, session, location.pathname, navigate])
 
-  // Show nav on all pages except auth/onboarding pages and conversation views
+  // Page types and visibility logic
   const isConversationPage = location.pathname.startsWith('/messages/') && location.pathname !== '/messages'
   const isAdminPage = location.pathname.startsWith('/admin') || location.pathname.startsWith('/super-admin')
-  const showNav = !NO_NAV_ROUTES.includes(location.pathname as typeof ROUTES.SPLASH) && !isConversationPage
-  
-  // Show header and footer only on homepage
   const isHomePage = location.pathname === ROUTES.HOME
+  
+  const showNav = !NO_NAV_ROUTES.includes(location.pathname as typeof ROUTES.SPLASH) && !isConversationPage
+  const isViewportPage = isConversationPage || location.pathname === ROUTES.MAP
 
   return (
-    <div className="flex min-h-screen bg-background selection:bg-[hsl(var(--gold)/0.2)] selection:text-foreground">
-      <main className={cn(
-        "flex-1 min-w-0 flex flex-col",
-        showNav && isMobile ? 'pb-[3.75rem]' : ''
+    <div className="flex h-dvh bg-background selection:bg-primary/20 selection:text-foreground overflow-hidden">
+      <div className={cn(
+        "flex-1 min-w-0 flex flex-col h-full",
+        showNav && isMobile ? 'pb-[calc(3.75rem+env(safe-area-inset-bottom,0px))]' : ''
       )}>
         {showNav && !isAdminPage && (!isMobile || isHomePage) && <TopHeader />}
 
-        <div className="flex-1 relative">
-          {children}
+        <div className={cn(
+          "flex-1 relative",
+          !isViewportPage && "overflow-y-auto overscroll-none"
+        )}>
+          {children || <Outlet />}
+          {showNav && !isAdminPage && !isMobile && !isViewportPage && <Footer />}
         </div>
-
-        {showNav && !isAdminPage && !isMobile && <Footer />}
-      </main>
+      </div>
 
       {showNav && isMobile && <BottomNav />}
     </div>

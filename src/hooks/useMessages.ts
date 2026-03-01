@@ -1,62 +1,227 @@
-import { useEffect, useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { toast } from 'sonner'
+import { Database } from '@/types/supabase'
+import { useAuth } from '@/hooks/useAuth'
 
-export function useConversations() {
-  return useQuery({
-    queryKey: ['conversations'],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_user_conversations')
-      if (error) throw error
-      return data
-    },
-    staleTime: 1000 * 60, // 1 minute
-  })
+type ConversationListRow = Database['public']['Tables']['conversations']['Row']
+type MessageRow = Database['public']['Tables']['messages']['Row']
+
+export interface ConversationWithDetails extends ConversationListRow {
+  other_user: {
+    id: string
+    full_name: string
+    avatar_url: string | null
+  }
+  property: {
+    title: string
+    slug: string
+    cover_image_url: string | null
+  } | null
+  latest_message: string | null
 }
 
-export function useChat(conversationId: string | undefined) {
-  const queryClient = useQueryClient()
-  const [messages, setMessages] = useState<any[]>([])
+export function useMessages(activeConversationId?: string) {
+  const { session } = useAuth()
+  const user = session?.user ?? null
+  const [conversations, setConversations] = useState<ConversationWithDetails[]>([])
+  const [messages, setMessages] = useState<MessageRow[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Initial fetch
-  const { data: initialMessages, isLoading } = useQuery({
-    queryKey: ['messages', conversationId],
-    queryFn: async () => {
-      if (!conversationId) return []
-      const { data, error } = await supabase.rpc('get_conversation_messages', {
-        p_conversation_id: conversationId,
-      } as any)
-      if (error) throw error
-      return data
-    },
-    enabled: !!conversationId,
-  })
-
-  useEffect(() => {
-    if (initialMessages) {
-      setMessages(initialMessages)
+  // Fetch all conversations for the user
+  const fetchConversations = async () => {
+    if (!user) {
+      setLoading(false)
+      return
     }
-  }, [initialMessages])
 
-  // Real-time subscription
+    try {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select(`
+          *,
+          buyer:buyer_id(id, full_name, avatar_url),
+          seller:seller_id(id, full_name, avatar_url),
+          property:property_id(title, slug, cover_image_url)
+        `)
+        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+        .order('last_message_at', { ascending: false, nullsFirst: false })
+
+      if (error) throw error
+
+      // Transform data to easily access "other_user" details
+      const formattedConversations: ConversationWithDetails[] = data.map((conv: any) => {
+        const isBuyer = conv.buyer_id === user.id
+        const otherUser = isBuyer ? conv.seller : conv.buyer
+
+        return {
+          ...conv,
+          other_user: otherUser,
+          property: conv.property,
+          latest_message: null 
+        }
+      })
+
+      setConversations(formattedConversations)
+    } catch (err) {
+      console.error('Error fetching conversations:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fetch messages for a specific conversation
+  const fetchMessages = async (conversationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true })
+
+      if (error) throw error
+      setMessages(data || [])
+    } catch (err) {
+      console.error('Error fetching messages:', err)
+    }
+  }
+
+  // Send a new message
+  const sendMessage = async (conversationId: string, content: string) => {
+    if (!user || !content.trim()) return
+
+    try {
+      const { error } = await (supabase
+        .from('messages') as any)
+        .insert({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          content: content.trim()
+        })
+
+      if (error) throw error
+      // Opt: Optimistic UI update could happen here, or let Realtime handle it
+      fetchConversations() // update the 'last_message_at' order
+    } catch (err) {
+      console.error('Error sending message:', err)
+      throw err
+    }
+  }
+
+  // Archive a conversation
+  const archiveConversation = async (conversationId: string) => {
+    try {
+      const { error } = await (supabase
+        .from('conversations') as any)
+        .update({ status: 'archived' })
+        .eq('id', conversationId)
+
+      if (error) throw error
+      fetchConversations()
+    } catch (err) {
+      console.error('Error archiving conversation:', err)
+      throw err
+    }
+  }
+
+  // Delete a conversation
+  const deleteConversation = async (conversationId: string) => {
+    try {
+      const { error } = await (supabase
+        .from('conversations') as any)
+        .delete()
+        .eq('id', conversationId)
+
+      if (error) throw error
+      fetchConversations()
+    } catch (err) {
+      console.error('Error deleting conversation:', err)
+      throw err
+    }
+  }
+
+  // Submit a review for a user/property
+  const submitReview = async (reviewData: {
+    reviewed_id: string
+    rating: number
+    comment?: string
+    property_id?: string
+  }) => {
+    if (!user) return
+    try {
+      const { error } = await (supabase
+        .from('reviews') as any)
+        .insert({
+          reviewer_id: user.id,
+          reviewed_id: reviewData.reviewed_id,
+          rating: reviewData.rating,
+          comment: reviewData.comment,
+          property_id: reviewData.property_id
+        })
+
+      if (error) throw error
+    } catch (err) {
+      console.error('Error submitting review:', err)
+      throw err
+    }
+  }
+
+  // Mark all unread messages in a conversation as read
+  const markAsRead = async (conversationId: string) => {
+    if (!user) return
+    try {
+      const { error } = await (supabase
+        .from('messages') as any)
+        .update({ read_at: new Date().toISOString() })
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', user.id)
+        .is('read_at', null)
+
+      if (error) throw error
+    } catch (err) {
+      console.error('Error marking as read:', err)
+    }
+  }
+
+  // Effect: Fetch initial conversations
   useEffect(() => {
-    if (!conversationId) return
+    fetchConversations()
+  }, [user])
+
+  // Effect: Fetch messages when active conversation changes
+  useEffect(() => {
+    if (activeConversationId) {
+      fetchMessages(activeConversationId)
+      markAsRead(activeConversationId)
+    } else {
+      setMessages([])
+    }
+  }, [activeConversationId])
+
+  // Effect: Subscribe to Realtime for Messages
+  useEffect(() => {
+    if (!user || !activeConversationId) return
 
     const channel = supabase
-      .channel(`chat:${conversationId}`)
+      .channel(`room:${activeConversationId}`)
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*', // Listen for INSERT and UPDATE (read receipts)
           schema: 'public',
           table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`,
+          filter: `conversation_id=eq.${activeConversationId}`
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new])
-          // Mark as read or update unread counts here if needed
-          queryClient.invalidateQueries({ queryKey: ['conversations'] })
+          if (payload.eventType === 'INSERT') {
+            setMessages((prev) => [...prev, payload.new as MessageRow])
+            if (payload.new.sender_id !== user.id) {
+               markAsRead(activeConversationId)
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            setMessages((prev) => 
+               prev.map(msg => msg.id === payload.new.id ? (payload.new as MessageRow) : msg)
+            )
+          }
         }
       )
       .subscribe()
@@ -64,51 +229,42 @@ export function useChat(conversationId: string | undefined) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [conversationId, queryClient])
+  }, [user, activeConversationId])
 
-  // Mark as read mutation
-  const markAsRead = useMutation({
-    mutationFn: async () => {
-      if (!conversationId) return
-      // Add logic here if you have a mark_conversation_read RPC
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] })
-    },
-  })
+  // Effect: Subscribe to Realtime for Conversations (List reordering)
+  useEffect(() => {
+    if (!user) return
 
-  // Send message mutation
-  const sendMessage = useMutation({
-    mutationFn: async (content: string) => {
-      if (!conversationId) throw new Error('No conversation selected')
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
+    const channel = supabase
+      .channel('public:conversations')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversations'
+        },
+        () => {
+          // A naive refresh - in production you'd merge the payload into state
+          fetchConversations()
+        }
+      )
+      .subscribe()
 
-      const { data, error } = await supabase
-        .from('messages')
-        .insert({
-          conversation_id: conversationId,
-          sender_id: user.id,
-          content,
-        } as any)
-        .select()
-        .single()
+    return () => {
+       supabase.removeChannel(channel)
+    }
+  }, [user])
 
-      if (error) throw error
-      return data
-    },
-    onSuccess: () => {
-      // Real-time subscription will handle updating the message list
-    },
-    onError: (error: any) => {
-      toast.error(`Failed to send message: ${error.message}`)
-    },
-  })
 
   return {
+    conversations,
     messages,
-    isLoading,
+    loading,
     sendMessage,
-    markAsRead,
+    archiveConversation,
+    deleteConversation,
+    submitReview,
+    refreshConversations: fetchConversations
   }
 }

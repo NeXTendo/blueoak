@@ -4,6 +4,10 @@ import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import PropertyCarousel from '@/components/property/PropertyCarousel'
 import FeaturedCategories from '@/components/home/FeaturedCategories'
+import TrustedRibbon from '@/components/home/TrustedRibbon'
+import PartnerRibbon from '@/components/home/PartnerRibbon'
+import HomeAdvantages from '@/components/home/HomeAdvantages'
+import MarketInsights from '@/components/home/MarketInsights'
 import Container from '@/components/layout/Container'
 import { Loader2, ArrowRight, X } from 'lucide-react'
 import { ROUTES } from '@/lib/constants'
@@ -233,58 +237,78 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="py-14 md:py-20">
-            <Container className="flex flex-col gap-16 md:gap-24">
-              
-              {/* Inject the novel Categories Section */}
-              <FeaturedCategories />
+            <div className="flex flex-col gap-0">
+              {/* 1. Trusted Ribbon */}
+              <TrustedRibbon />
 
-              {sections.map((section, idx) =>
-                section.properties.length > 0 ? (
-                  <PropertyCarousel
-                    key={idx}
-                    title={section.title}
-                    properties={section.properties}
-                    linkTo={section.linkTo}
-                  />
-                ) : null
-              )}
+              <Container className="flex flex-col gap-12 md:gap-16 pt-12 md:pt-16">
+                {/* 2. Featured Categories */}
+                <FeaturedCategories />
 
-              {/* CTA Banner */}
-              <section className="relative overflow-hidden rounded-sm bg-charcoal text-white py-16 md:py-24 px-8 md:px-16">
-                {/* Gold accent line */}
-                <div className="absolute top-0 left-0 right-0 h-px bg-[hsl(var(--gold)/0.4)]" />
+                {/* 3. Advantages */}
+                <HomeAdvantages />
 
-                <div className="max-w-2xl relative z-10">
-                  <div className="flex items-center gap-3 mb-6">
-                    <span className="w-8 h-px bg-[hsl(var(--gold))]" />
-                    <span className="text-[hsl(var(--gold))] text-[10px] font-semibold uppercase tracking-[0.25em]">List Your Asset</span>
-                  </div>
-                  <h2 className="font-serif text-3xl md:text-5xl font-light leading-tight mb-5">
-                    Reach qualified buyers
-                    <br />
-                    <span className="italic text-white/50">across the globe.</span>
-                  </h2>
-                  <p className="text-white/50 text-base mb-10 leading-relaxed max-w-lg">
-                    Access our global network of verified buyers and investors. Professional marketing, zero hassle.
-                  </p>
-                  <div className="flex flex-wrap gap-4">
-                    <Link to={ROUTES.ADD_PROPERTY} className="je-btn-gold px-8 py-4 text-sm shadow-gold-glow">
-                      Start Listing
-                      <ArrowRight size={15} />
-                    </Link>
-                    <Link to={ROUTES.SEARCH} className="flex items-center gap-2 px-8 py-4 border border-white/20 text-white/60 rounded-sm text-sm font-medium hover:text-white hover:border-white/40 transition-colors">
-                      Browse Listings
-                    </Link>
-                  </div>
+                {/* 4. Property Collections */}
+                <div className="flex flex-col gap-16 md:gap-24">
+                  {sections.map((section, idx) =>
+                    section.properties.length > 0 ? (
+                      <PropertyCarousel
+                        key={idx}
+                        title={section.title}
+                        properties={section.properties}
+                        linkTo={section.linkTo}
+                      />
+                    ) : null
+                  )}
                 </div>
+              </Container>
 
-                {/* Decorative gold element */}
-                <div className="absolute right-0 top-0 bottom-0 w-1/3 hidden lg:flex items-center justify-center opacity-10">
-                  <div className="w-48 h-48 rounded-full border border-[hsl(var(--gold))]" />
-                  <div className="absolute w-32 h-32 rounded-full border border-[hsl(var(--gold))]" />
-                </div>
-              </section>
-            </Container>
+              {/* 5. Elite Partners Ribbon */}
+              <div className="mt-12 md:mt-16">
+                <PartnerRibbon />
+              </div>
+
+              <Container className="flex flex-col gap-12 md:gap-16 pt-12 md:pt-16">
+                {/* 6. Market Insights */}
+                <MarketInsights />
+
+                {/* 7. CTA Banner */}
+                <section className="relative overflow-hidden rounded-sm bg-charcoal text-white py-16 md:py-24 px-8 md:px-16">
+                  {/* Gold accent line */}
+                  <div className="absolute top-0 left-0 right-0 h-px bg-[hsl(var(--gold)/0.4)]" />
+
+                  <div className="max-w-2xl relative z-10">
+                    <div className="flex items-center gap-3 mb-6">
+                      <span className="w-8 h-px bg-[hsl(var(--gold))]" />
+                      <span className="text-[hsl(var(--gold))] text-[10px] font-semibold uppercase tracking-[0.25em]">List Your Asset</span>
+                    </div>
+                    <h2 className="font-serif text-3xl md:text-5xl font-light leading-tight mb-5">
+                      Reach qualified buyers
+                      <br />
+                      <span className="italic text-white/50">across the globe.</span>
+                    </h2>
+                    <p className="text-white/50 text-base mb-10 leading-relaxed max-w-lg">
+                      Access our global network of verified buyers and investors. Professional marketing, zero hassle.
+                    </p>
+                    <div className="flex flex-wrap gap-4">
+                      <Link to={ROUTES.ADD_PROPERTY} className="je-btn-gold px-8 py-4 text-sm shadow-gold-glow">
+                        Start Listing
+                        <ArrowRight size={15} />
+                      </Link>
+                      <Link to={ROUTES.SEARCH} className="flex items-center gap-2 px-8 py-4 border border-white/20 text-white/60 rounded-sm text-sm font-medium hover:text-white hover:border-white/40 transition-colors">
+                        Browse Listings
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Decorative gold element */}
+                  <div className="absolute right-0 top-0 bottom-0 w-1/3 hidden lg:flex items-center justify-center opacity-10">
+                    <div className="w-48 h-48 rounded-full border border-[hsl(var(--gold))]" />
+                    <div className="absolute w-32 h-32 rounded-full border border-[hsl(var(--gold))]" />
+                  </div>
+                </section>
+              </Container>
+            </div>
           </div>
         )}
       </div>

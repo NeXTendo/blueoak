@@ -82,7 +82,7 @@ export const router = createBrowserRouter([
       { path: `${ROUTES.PROFILE}/:username`,  element: L(PublicProfilePage) },
       { path: ROUTES.PROPERTY_DETAIL, element: L(PropertyDetailPage) },
       { path: ROUTES.ADD_PROPERTY,    element: <ProtectedRoute><RoleRoute roles={['seller','agent','admin','super_admin']}>{L(AddPropertyPage)}</RoleRoute></ProtectedRoute> },
-      { path: `${ROUTES.EDIT_PROPERTY}/:id`,   element: <ProtectedRoute>{L(EditPropertyPage)}</ProtectedRoute> },
+      { path: ROUTES.EDIT_PROPERTY,    element: <ProtectedRoute>{L(EditPropertyPage)}</ProtectedRoute> },
       { path: ROUTES.RESERVATIONS,    element: <ProtectedRoute>{L(ReservationsPage)}</ProtectedRoute> },
 
       // Seller

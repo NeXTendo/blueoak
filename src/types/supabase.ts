@@ -103,6 +103,70 @@ export type Database = {
         Insert: Omit<Database['public']['Tables']['notifications']['Row'], 'id' | 'created_at' | 'is_read'>
         Update: Partial<Database['public']['Tables']['notifications']['Row']>
       }
+      conversations: {
+        Row: {
+          id: string
+          buyer_id: string
+          seller_id: string
+          property_id: string | null
+          last_message_at: string | null
+          buyer_unread: number
+          seller_unread: number
+          is_archived: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          buyer_id: string
+          seller_id: string
+          property_id?: string | null
+          last_message_at?: string | null
+          buyer_unread?: number
+          seller_unread?: number
+          is_archived?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          buyer_id?: string
+          seller_id?: string
+          property_id?: string | null
+          last_message_at?: string | null
+          buyer_unread?: number
+          seller_unread?: number
+          is_archived?: boolean
+          created_at?: string
+        }
+      }
+      messages: {
+        Row: {
+          id: string
+          conversation_id: string
+          sender_id: string
+          content: string
+          attachment_url: string | null
+          read_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          conversation_id: string
+          sender_id: string
+          content: string
+          attachment_url?: string | null
+          read_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          conversation_id?: string
+          sender_id?: string
+          content?: string
+          attachment_url?: string | null
+          read_at?: string | null
+          created_at?: string
+        }
+      }
     }
     Views: Record<string, never>
     Functions: {

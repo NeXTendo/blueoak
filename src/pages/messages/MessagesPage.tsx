@@ -12,17 +12,17 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
-import { useConversations } from '@/hooks/useMessages'
+import { useMessages } from '@/hooks/useMessages'
 
 export default function MessagesPage() {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
-  const { data: conversations, isLoading } = useConversations()
+  const { conversations, loading: isLoading } = useMessages()
 
-  const filteredConversations = ((conversations as unknown as any[]) || []).filter((c: any) => 
-    c.other_user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const filteredConversations = (conversations || []).filter((c: any) => 
+    c.other_user?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.property_title?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
@@ -53,13 +53,13 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-dvh overflow-hidden bg-background">
       {/* List Pane */}
       <aside className={cn(
         "w-full lg:w-96 flex flex-col border-r border-border/50 bg-background/50 backdrop-blur-xl",
         selectedId && "hidden lg:flex"
       )}>
-        <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl pt-[env(safe-area-inset-top,0px)] px-4 md:px-6 pb-4 space-y-4">
+        <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] px-4 md:px-6 pb-4 space-y-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold tracking-tight">Messages</h1>
             <div className="flex gap-2">
@@ -98,14 +98,14 @@ export default function MessagesPage() {
               >
                 <div className="relative shrink-0">
                   <Avatar className="h-12 w-12 border border-border shadow-sm">
-                    <AvatarImage src={conv.other_user_avatar} />
-                    <AvatarFallback className="font-semibold">{conv.other_user_name?.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={conv.other_user?.avatar_url} />
+                    <AvatarFallback className="font-semibold">{conv.other_user?.full_name?.charAt(0)}</AvatarFallback>
                   </Avatar>
                 </div>
 
                 <div className="flex-1 min-w-0 space-y-0.5">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-[15px] truncate pr-2">{conv.other_user_name}</h3>
+                    <h3 className="font-semibold text-[15px] truncate pr-2">{conv.other_user?.full_name}</h3>
                     <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                       {formatTime(conv.last_message_at)}
                     </span>
@@ -113,7 +113,7 @@ export default function MessagesPage() {
                   
                   <div className="flex items-center gap-1.5">
                      <p className="text-[11px] font-semibold text-primary truncate max-w-[140px]">
-                       {conv.property_title}
+                       {conv.property?.title}
                      </p>
                   </div>
 
