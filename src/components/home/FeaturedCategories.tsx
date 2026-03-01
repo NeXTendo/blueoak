@@ -94,7 +94,7 @@ export default function FeaturedCategories() {
             Featured Categories
           </h2>
           <p className="text-muted-foreground font-medium max-w-xl">
-            Explore our meticulously curated portfolio by property type to find your perfect lifestyle match.
+            Explore our marvelous curated portfolio by property type to find your perfect lifestyle match.
           </p>
         </div>
       </div>

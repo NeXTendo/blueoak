@@ -256,7 +256,7 @@ export default function PropertyDetailPage() {
         </Container>
 
         <Container>
-          {/* Mosaic Grid — JamesEdition Style (Desktop Only) */}
+          {/* Grid Style (Desktop Only) */}
           <div className="hidden md:grid grid-cols-12 grid-rows-2 gap-3 h-[600px] rounded-none overflow-hidden relative group">
             <div 
               className="col-span-8 row-span-2 relative overflow-hidden cursor-zoom-in"
@@ -291,7 +291,7 @@ export default function PropertyDetailPage() {
 
         </Container>
 
-        {/* Mobile Gallery: Immersive Edge-to-Edge */}
+        {/* Mobile Gallery Edge-to-Edge */}
         <div className="md:hidden w-full relative overflow-hidden bg-black">
            <div 
              onScroll={handleScroll}
@@ -325,13 +325,13 @@ export default function PropertyDetailPage() {
         </div>
       </section>
 
-      {/* ── Main Layout (Content + Sticky Sidebar) ─────────────────── */}
+      {/*  Main Layout (Content + Sticky Sidebar) */}
       <main className="pt-16 pb-32">
         <Container>
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-16 lg:gap-24">
             
             <div className="space-y-16">
-              {/* ── JamesEdition Header: Core Intelligence ───────────────── */}
+              {/* Header: Core Intelligence  */}
               <section className="space-y-6">
                  {/* Price & Title Area */}
                   <div className="space-y-4">
@@ -432,7 +432,7 @@ export default function PropertyDetailPage() {
                    </Accordion>
                 </section>
 
-               {/* ── Chapter 4: Amenities & Lifestyle (JamesEdition Grid) ──── */}
+               {/* ── Chapter 4: Amenities & Lifestyle (Grid) ──── */}
                 <section className="space-y-12 pt-4">
                    <h2 className="text-lg md:text-xl font-black uppercase tracking-[0.3em] text-black border-l-4 border-black pl-6">
                       Features & Amenities
@@ -597,7 +597,7 @@ export default function PropertyDetailPage() {
 
              </div> {/* ── End left content column ── */}
 
-             {/* ── STICKY SIDEBAR — Seller View ─────────────────────── */}
+             {/* STICKY SIDEBAR — Seller View*/}
              {showSellerView ? (
                <aside className="relative">
                  <div className="sticky top-32 space-y-6">
@@ -735,7 +735,7 @@ export default function PropertyDetailPage() {
              )}
           </div>
 
-          {/* ── CHAPTER 9: RELATED DISCOVERIES ────────────────────────── */}
+          {/* ── CHAPTER 9: RELATED DISCOVERIES */}
           <div className="mt-32 space-y-32 border-t border-border/40 pt-24">
              {/* Similar Properties */}
              {featured && featured.length > 0 && (
@@ -835,7 +835,7 @@ export default function PropertyDetailPage() {
         </Container>
       </main>
 
-      {/* ── MOBILE STICKY ACQUISITION BAR ───────────────────────────── */}
+      {/* ── MOBILE STICKY ACQUISITION BAR */}
       <div className="lg:hidden fixed bottom-16 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-border/40 p-4 z-40 animate-in slide-in-from-bottom duration-700">
         <Container>
           {showSellerView ? (
@@ -871,7 +871,7 @@ export default function PropertyDetailPage() {
       </div>
 
 
-      {/* ── FULLSCREEN LIGHTBOX ─────────────────────────────────────── */}
+      {/* ── FULLSCREEN LIGHTBOX */}
       {showLightbox && (
          <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-4 md:p-12 animate-in fade-in duration-300">
             <button 

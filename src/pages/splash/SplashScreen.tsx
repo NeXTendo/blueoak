@@ -16,7 +16,7 @@ export default function SplashScreen() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background">
-      <div className="w-64 h-64">
+      <div className="w-72 h-72">
         <DotLottieReact
           src="https://lottie.host/77b449e0-7c11-49ef-9014-b43e4dcb8ea8/7raqFEi1k1.lottie"
           loop
