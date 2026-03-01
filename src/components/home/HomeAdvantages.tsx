@@ -4,17 +4,17 @@ const ADVANTAGES = [
   {
     icon: ShieldCheck,
     title: 'Verified Properties',
-    description: 'Every listing on BlueOak undergoes a rigorous verification process to ensure authenticity and legal compliance, protecting your investment.',
+    description: 'Every listing on BlueOak undergoes a verification process to ensure authenticity and legal compliance, protecting your investment.',
   },
   {
     icon: Globe,
-    title: 'Global Reach',
-    description: 'Connecting extraordinary assets with a worldwide network of qualified buyers across Africa, Europe, and beyond.',
+    title: 'Extended Reach',
+    description: 'Connecting extraordinary assets with a network of qualified buyers across Zambia and beyond.',
   },
   {
     icon: UserCheck,
     title: 'Expert Guidance',
-    description: 'Our ecosystem includes top-tier partner agencies and legal advisors who provide professional support at every step of your transaction.',
+    description: 'We provide professional support at every step of your transaction.',
   },
 ]
 

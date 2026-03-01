@@ -130,7 +130,7 @@ export default function HomePage() {
 
               {/* Headline */}
               <h1 className="font-serif text-white text-4xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tighter mb-8 drop-shadow-2xl">
-                Discover Extraordinary Properties Across Borders.
+                Discover Extraordinary Properties in Zambia and across borders.
               </h1>
 
               {/* CTAs */}
@@ -285,10 +285,10 @@ export default function HomePage() {
                     <h2 className="font-serif text-3xl md:text-5xl font-light leading-tight mb-5">
                       Reach qualified buyers
                       <br />
-                      <span className="italic text-white/50">across the globe.</span>
+                      <span className="italic text-white/50">across the country.</span>
                     </h2>
                     <p className="text-white/50 text-base mb-10 leading-relaxed max-w-lg">
-                      Access our global network of verified buyers and investors. Professional marketing, zero hassle.
+                      Access a network of verified buyers and investors.
                     </p>
                     <div className="flex flex-wrap gap-4">
                       <Link to={ROUTES.ADD_PROPERTY} className="je-btn-gold px-8 py-4 text-sm shadow-gold-glow">

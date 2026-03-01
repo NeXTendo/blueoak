@@ -8,19 +8,19 @@ const slides = [
   {
     Icon: Home,
     title: 'Curated Excellence',
-    description: 'Access the most exclusive real estate listings across the continent. Refined for the discerning investor.',
+    description: 'Access the most extensive real estate listings across Zambia.',
     accent: 'from-amber-900/20 to-transparent',
   },
   {
     Icon: Compass,
     title: 'Precision Search',
-    description: 'Advanced geospatial filtering and neighbourhood analytics to pinpoint your next acquisition.',
+    description: 'Advanced filtering and neighbourhood analytics to pinpoint your next acquisition.',
     accent: 'from-stone-800/20 to-transparent',
   },
   {
     Icon: Key,
     title: 'Seamless Access',
-    description: 'Direct connections to premium sellers and verified agents. The key to your next chapter.',
+    description: 'Direct connections to premium sellers and verified agents.',
     accent: 'from-yellow-900/20 to-transparent',
   },
 ]
